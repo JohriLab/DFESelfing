@@ -1,0 +1,5 @@
+DFE beta    gamma
+DFE1    0.9 5
+DFE2    0.5 50
+DFE3    0.3 1000
+DFE4    3   10000
