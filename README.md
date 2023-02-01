@@ -1,8 +1,8 @@
 # DFESelfing
 
->>Total number of neutral and selected sites in exons:
-Number of neutral sites = Number of genes simulated (500) x Number of exons per gene (6) x exon length (250) x Proportion of neutral mutations (0.25)
-Number of selected sites = Number of genes simulated (500) x Number of exons per gene (6) x exon length (250) x Proportion of selected mutations (0.75)
+>>Total number of neutral and selected sites in exons:\
+Number of neutral sites = Number of genes simulated (500) x Number of exons per gene (6) x exon length (250) x Proportion of neutral mutations (0.25)\
+Number of selected sites = Number of genes simulated (500) x Number of exons per gene (6) x exon length (250) x Proportion of selected mutations (0.75)\
 
 >>SFS.zip\
 Has the SFS for simulations performed for 3 different DFEs - DFE1, DFE2, DFE3.\
