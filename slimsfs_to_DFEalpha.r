@@ -1,19 +1,5 @@
 # An R script to convert slim simulation SFS output to DFE alpha's input format
 
-#plan
-
-#header 
-#line 1 is 1 because all sfs's have the same number of alleles
-#line 2 number of alleles sampled
-
-
-
-#lines 2 and 3 need to be neutral and selected DFEs for each individual
-#starting with unfolded sfs for 1-99
-# need to add fixed count to column at each end, matching the correct samples
-# can do grep or just row number, I think row number will be stable but maybe not? 
-# I'll make column 1 match for each and join on that, will be more reliable
-
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
@@ -79,6 +65,35 @@ sel <- c("DFE1_sel", "DFE2_sel")
 
 DFE_list <- c("DFE1", "DFE2")
 
+paste(x, "_neu", sep = "")
+paste(x, "_sel", sep = "")
+
+paste("/DFE_alpha_SFS_format/", x, y, sep='')
+replicates <- get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])$filename
+dfealpha_sfs <- function(x) {
+for(y in replicates) {
+    df <- data.frame(Map(c,
+        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])$filename == y, ],
+        get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), combined_df_names_list)])$filename == y, ]))
+    #path and name of final file
+    filepath <- paste(path_to_files, paste("/DFE_alpha_SFS_format/", x, y, sep=""), sep = "")
+    df_stripped <- df[2:102]
+    names(df_stripped) <- NULL
+    #write to fle with proper header structure. Assumes 100 alleles were chosen
+    write(1, file = filepath)
+    write(100, file = filepath, append = TRUE)
+    write.table(df_stripped, row.names = FALSE, quote = FALSE, 
+        file = filepath, append = TRUE)
+}
+
+}
+
+lapply(DFE_list, dfealpha_sfs)
+
+c(1,100,dfealphaformat[3][[1]])
+
+#need to write code to make unique config files for each run, so that DFE alpha does not overwrite them
+
 df <- data.frame(Map(c,
     get(combined_df_names_list[grepl("DFE1_neu", combined_df_names_list)])[get(combined_df_names_list[grepl("DFE1_neu", combined_df_names_list)])$filename == 'output1.txt', ],
     get(combined_df_names_list[grepl("DFE1_sel", combined_df_names_list)])[get(combined_df_names_list[grepl("DFE1_sel", combined_df_names_list)])$filename == 'output1.txt', ]))
@@ -93,11 +108,3 @@ write(1, file = path)
 write(100, file = path, append = TRUE)
 write.table(df_stripped, row.names = FALSE, quote = FALSE, 
     file = path, append = TRUE)
-
-
-capture.output(dfealphaformat, 
-    file = paste(path_to_files, "/DFE_alpha_SFS_format/DFE1SFS_dfealpha.txt", sep = ""))
-
-c(1,100,dfealphaformat[3][[1]])
-
-#need to write code to make unique config files for each run, so that DFE alpha does not overwrite them
