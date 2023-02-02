@@ -61,22 +61,30 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 #code to get output1 from DFE1_nue
 # can make loops to move through DFEs, then through outputs 
 # can hard code lists for now?
-neu <- c("DFE1_neu", "DFE2_neu")
-sel <- c("DFE1_sel", "DFE2_sel")
 
 DFE_list <- c("DFE1", "DFE2", "DFE3")
 
 #this assumes all files in SFS folder have same number and name of replicates
 #if this assumption is violated the code will need to get more complex
+
 replicates <- get(combined_df_names_list[1])$filename
+
+#clears out script to run dfe alpha 
+write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
 
 dfealpha_sfs <- function(x) {
 for(y in replicates) {
     df <- data.frame(Map(c,
-        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])$filename == y, ],
-        get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), combined_df_names_list)])$filename == y, ]))
+        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])$filename == y, ],
+        get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])$filename == y, ]))
     #path and name of final file
-    filepath <- paste(path_to_DFESelfing, paste(x, y, sep=""), sep = "")
+    filepath <- paste(path_to_DFESelfing, x, y, sep = "")
+    neuconfigpath <- paste(path_to_DFESelfing, "neu_config_", x, y, sep = "")
+    selconfigpath <- paste(path_to_DFESelfing, "sel_config_", x, y, sep = "")
     df_stripped <- df[2:102]
     names(df_stripped) <- NULL
     #write to fle with proper header structure. Assumes 100 alleles were chosen
@@ -84,11 +92,46 @@ for(y in replicates) {
     write(100, file = filepath, append = TRUE)
     write.table(df_stripped, row.names = FALSE, quote = FALSE, 
         file = filepath, append = TRUE)
-}
 
-}
+    #write neutral and selected config files
+    write("data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
+site_class 0
+fold 1
+epochs 2
+search_n2 1
+t2_variable 1
+t2 50", file = neuconfigpath )
+    write(paste("sfs_input_file", filepath), 
+        file = neuconfigpath, append = TRUE)
+    write(
+        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/", 
+            x, y, "_neutral", sep = ""), 
+        file = neuconfigpath, append = TRUE)
+    write("data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
+site_class 1
+fold 1
+epochs 2
+mean_s_variable 1
+mean_s -0.01
+beta_variable 1
+beta 0.5", file = selconfigpath)
+    write(paste("sfs_input_file ", filepath, sep = ""), 
+        file = selconfigpath, append = TRUE)
+    write(
+        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/", 
+            x, y, "_selected", sep = ""), 
+        file = selconfigpath, append = TRUE)
+    write(
+        paste("est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/", 
+            x, y, "_neutral", "/est_dfe.out", sep = ""), 
+        file = selconfigpath, append = TRUE)
+
+    #create a script to run dfe_alpha on all configs on the command line
+    #to run: "bash run_dfealpha"
+    write(paste("./est_dfe -c ", neuconfigpath, sep = ""), 
+        file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
+    write(paste("./est_dfe -c ", selconfigpath, sep = ""), 
+        file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
+}}
 
 lapply(DFE_list, dfealpha_sfs)
-
-#need to write code to make unique config files for each run, so that DFE alpha does not overwrite them
-
