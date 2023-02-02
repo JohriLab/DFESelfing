@@ -3,7 +3,8 @@
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/DFESelfing/SFS/"
+path_to_files <- "/nas/longleaf/home/adaigle/SFS/"
+path_to_DFESelfing <- "/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input/"
 #total neutral sites is 187500
 neutral_sites <- 187500
 #total selected sites are 562500
@@ -63,20 +64,19 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 neu <- c("DFE1_neu", "DFE2_neu")
 sel <- c("DFE1_sel", "DFE2_sel")
 
-DFE_list <- c("DFE1", "DFE2")
+DFE_list <- c("DFE1", "DFE2", "DFE3")
 
-paste(x, "_neu", sep = "")
-paste(x, "_sel", sep = "")
+#this assumes all files in SFS folder have same number and name of replicates
+#if this assumption is violated the code will need to get more complex
+replicates <- get(combined_df_names_list[1])$filename
 
-paste("/DFE_alpha_SFS_format/", x, y, sep='')
-replicates <- get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])$filename
 dfealpha_sfs <- function(x) {
 for(y in replicates) {
     df <- data.frame(Map(c,
         get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), combined_df_names_list)])$filename == y, ],
         get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), combined_df_names_list)])$filename == y, ]))
     #path and name of final file
-    filepath <- paste(path_to_files, paste("/DFE_alpha_SFS_format/", x, y, sep=""), sep = "")
+    filepath <- paste(path_to_DFESelfing, paste(x, y, sep=""), sep = "")
     df_stripped <- df[2:102]
     names(df_stripped) <- NULL
     #write to fle with proper header structure. Assumes 100 alleles were chosen
@@ -90,21 +90,5 @@ for(y in replicates) {
 
 lapply(DFE_list, dfealpha_sfs)
 
-c(1,100,dfealphaformat[3][[1]])
-
 #need to write code to make unique config files for each run, so that DFE alpha does not overwrite them
 
-df <- data.frame(Map(c,
-    get(combined_df_names_list[grepl("DFE1_neu", combined_df_names_list)])[get(combined_df_names_list[grepl("DFE1_neu", combined_df_names_list)])$filename == 'output1.txt', ],
-    get(combined_df_names_list[grepl("DFE1_sel", combined_df_names_list)])[get(combined_df_names_list[grepl("DFE1_sel", combined_df_names_list)])$filename == 'output1.txt', ]))
-
-
-path <- paste(path_to_files, "/DFE_alpha_SFS_format/DFE1SFS_dfealpha.txt", sep = "")
-df_stripped <- df[2:102]
-names(df_stripped) <- NULL
-
-
-write(1, file = path)
-write(100, file = path, append = TRUE)
-write.table(df_stripped, row.names = FALSE, quote = FALSE, 
-    file = path, append = TRUE)
