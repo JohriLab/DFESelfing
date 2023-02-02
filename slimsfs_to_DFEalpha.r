@@ -7,6 +7,7 @@
 #line 2 number of alleles sampled
 
 
+
 #lines 2 and 3 need to be neutral and selected DFEs for each individual
 #starting with unfolded sfs for 1-99
 # need to add fixed count to column at each end, matching the correct samples
