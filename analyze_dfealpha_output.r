@@ -17,13 +17,17 @@ for(x in DFE_list) {
         stats <- merge(stats,df)
     }
 }
-data <- readLines("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/DFE1output1.txt_selected/est_dfe.out")
-vector_data <- unlist(strsplit(data, " "))
 
+stats <- as.data.frame(t(stats))
+names(stats) <- stats[1,]
+stats <- stats[-1,]
+stats$NwEs <- as.numeric(stats$Es) * as.numeric(stats$Nw)
+stats$gamma <- 2*stats$NwEs
 
-# create a vector of the data
-
-# convert the vector to a data frame
-df <- data.frame(matrix(vector_data, ncol = 2, byrow = TRUE))
-
-merge(stats,df)
+means <- data.frame()
+for(x in DFE_list) {
+    tmpdf <- stats[grep(x, rownames(stats)),]
+    tmpdf <- as.data.frame(sapply(tmpdf, FUN=as.numeric))
+    means <- rbind(means, c(x, sapply(tmpdf, FUN=mean)))
+}
+colnames(means) <- c("Experiment", colnames(stats))

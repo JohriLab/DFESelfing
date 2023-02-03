@@ -75,11 +75,11 @@ write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
 dfealpha_sfs <- function(x) {
 for(y in replicates) {
     df <- data.frame(Map(c,
-        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
-            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
-            combined_df_names_list)])$filename == y, ],
         get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
             combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])$filename == y, ],
+        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
             combined_df_names_list)])$filename == y, ]))
     #path and name of final file
     filepath <- paste(path_to_DFESelfing, x, y, sep = "")
@@ -114,7 +114,9 @@ epochs 2
 mean_s_variable 1
 mean_s -0.01
 beta_variable 1
-beta 0.5", file = selconfigpath)
+beta 0.5
+p_additional 0
+s_additional 0 ", file = selconfigpath)
     write(paste("sfs_input_file ", filepath, sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
