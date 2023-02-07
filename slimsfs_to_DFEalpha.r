@@ -1,10 +1,12 @@
 # An R script to convert slim simulation SFS output to DFE alpha's input format
+#TODO fix many hard coded directory paths. 
+#Make sure input and output directories go where you want them to
 
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/SFS/"
-path_to_DFESelfing <- "/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input/"
+path_to_files <- "/nas/longleaf/home/adaigle/SFS/eqm_selfing99/"
+path_to_DFESelfing <- "/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input_100/"
 #total neutral sites is 187500
 neutral_sites <- 187500
 #total selected sites are 562500
@@ -59,8 +61,6 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 #pasting neu and sel together in a file
 
 #code to get output1 from DFE1_nue
-# can make loops to move through DFEs, then through outputs 
-# can hard code lists for now?
 
 DFE_list <- c("DFE1", "DFE2", "DFE3")
 
@@ -104,7 +104,7 @@ t2 50", file = neuconfigpath )
     write(paste("sfs_input_file", filepath), 
         file = neuconfigpath, append = TRUE)
     write(
-        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/", 
+        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_100/", 
             x, y, "_neutral", sep = ""), 
         file = neuconfigpath, append = TRUE)
     write("data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
@@ -120,11 +120,11 @@ s_additional 0 ", file = selconfigpath)
     write(paste("sfs_input_file ", filepath, sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
-        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/", 
+        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_100/", 
             x, y, "_selected", sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
-        paste("est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/", 
+        paste("est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_100/", 
             x, y, "_neutral", "/est_dfe.out", sep = ""), 
         file = selconfigpath, append = TRUE)
 
