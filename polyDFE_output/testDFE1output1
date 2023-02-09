@@ -1,0 +1,12 @@
+---- Running command
+---- ./polyDFE -d /nas/longleaf/home/adaigle/DFESelfing/polyDFE_input/DFE1output1.txt -m A 
+---- Performing inference using model A
+
+---- Performing inference on /nas/longleaf/home/adaigle/DFESelfing/polyDFE_input/DFE1output1.txt
+---- No mutation variability. Using Poisson likelihood.
+
+
+---- Calculating initial values
+
+-- Starting local optimization
+-- Optimizing all parameters

@@ -136,4 +136,64 @@ s_additional 0 ", file = selconfigpath)
         file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
 }}
 
-lapply(DFE_list, dfealpha_sfs)
+#lapply(DFE_list, dfealpha_sfs)
+
+
+path_to_polyDFE_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/polyDFE_input/"
+
+# this function creates input sfs files for polydfe
+#will add commands in a bit
+polydfe_sfs <- function(x) {
+for(y in replicates) {
+    df <- data.frame(Map(c,
+        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])$filename == y, ],
+        get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])$filename == y, ]))
+    #path and name of final file
+    filepath <- paste(path_to_DFESelfing, x, y, sep = "")
+    df_stripped <- df[2:102]
+    names(df_stripped) <- NULL
+    #write to fle with proper header structure. Assumes 100 alleles were chosen
+    write(1 1 100, file = filepath)
+    write(100, file = filepath, append = TRUE)
+    write.table(df_stripped, row.names = FALSE, quote = FALSE, 
+        file = filepath, append = TRUE)
+
+}}
+x <- "DFE1"
+y <- "output1.txt"
+neudf <- data.frame(Map(c,
+        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
+            combined_df_names_list)])$filename == y, ]))
+seldf <- data.frame(Map(c,
+        get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
+            combined_df_names_list)])$filename == y, ]))
+    #path and name of final file
+    filepath <- paste(path_to_polyDFE_current_input, x, y, sep = "")
+    neudf_stripped <- neudf[3:102]
+    neudf_stripped <- as.data.frame(append(neudf_stripped, "", after = 99))
+    neudf_stripped <- as.data.frame(append(neudf_stripped, neutral_sites, after = 100))
+    neudf_stripped <- as.data.frame(append(neudf_stripped, neutral_sites))
+
+    names(neudf_stripped) <- NULL
+
+    seldf_stripped <- seldf[3:102]
+    seldf_stripped <- as.data.frame(append(seldf_stripped, "", after = 99))
+    seldf_stripped <- as.data.frame(append(seldf_stripped, selected_sites, after = 100))
+    seldf_stripped <- as.data.frame(append(seldf_stripped, selected_sites))
+    names(seldf_stripped) <- NULL
+
+    #write to fle with proper header structure. Assumes 100 alleles were chosen
+    write("1 1 100", file = filepath)
+    write("", file = filepath, append = TRUE)
+    write.table(neudf_stripped, row.names = FALSE, quote = FALSE, 
+        file = filepath, append = TRUE, sep = "\t")
+    write("", file = filepath, append = TRUE)
+    write.table(seldf_stripped, row.names = FALSE, quote = FALSE, 
+        file = filepath, append = TRUE, sep = "\t")
+

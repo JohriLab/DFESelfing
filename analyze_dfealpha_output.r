@@ -132,7 +132,7 @@ return(c(list(f0), list(f1), list(f2), list(f3)))
 }
 
 #not quite sure what the control Nw should be. Putting 100 for now
-Nw <- c(100, as.numeric(means0$Nw), as.numeric(means50$Nw), as.numeric(means99$Nw))
+Nw <- c(as.numeric(means0$Nw), as.numeric(means50$Nw), as.numeric(means99$Nw))
 #meanS <- as.numeric(args[2]) # shape = mean * rate
 meanGamma <- c(-as.numeric(means0$gamma), -as.numeric(means50$gamma), -as.numeric(means99$gamma))
 meanS <- meanGamma/(2.0*Nw)
@@ -144,13 +144,27 @@ beta <- c(as.numeric(means0$b), as.numeric(means50$b), as.numeric(means99$b)) #s
 #so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
 discrete_classes<-DFE_proportions(Nw,meanGamma,meanS,beta)
 
+B <- (c(
+0.94919771, 0.93074411, 0.89399308, 0.70231493, 0.67842912, 0.61559224, 0.16699000, 0.04243927, 0.04826596
+))
 #also get vectors for three true DFEs
 ## DFE1 true discrete
+#followed by three adjustments based on pi calculations for DFE
 DFE1Nw <- 100
 DFE1Gamma <- 5
 DFE1meanS <- DFE1Gamma/(2*DFE1Nw)
 DFE1beta <- 0.9
 DFE1_truth <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS,DFE1beta)
+
+DFE1meanS_S0 <- (5*0.94919771)/(2*DFE1Nw)
+DFE1_truth_S0 <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS_S0,DFE1beta)
+
+DFE1meanS_S50 <- (5*0.70231493)/(2*DFE1Nw)
+DFE1_truth_S50 <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS_S50,DFE1beta)
+
+DFE1meanS_S99 <- (5*0.16699000)/(2*DFE1Nw)
+DFE1_truth_S99 <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS_S99,DFE1beta)
+
 
 ## DFE2 true discrete
 DFE2Nw <- 100
@@ -159,12 +173,27 @@ DFE2meanS <- DFE2Gamma/(2*DFE2Nw)
 DFE2beta <- 0.5
 DFE2_truth <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS,DFE2beta)
 
+DFE2meanS_S0 <- (50*0.93074411)/(2*DFE2Nw)
+DFE2_truth_S0 <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS_S0,DFE2beta)
+DFE2meanS_S50 <- (50*0.67842912)/(2*DFE2Nw)
+DFE2_truth_S50 <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS_S50,DFE2beta)
+DFE2meanS_S99 <- (50*0.04243927)/(2*DFE2Nw)
+DFE2_truth_S99 <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS_S99,DFE2beta)
+
 ## DFE3 true discrete
 DFE3Nw <- 100
 DFE3Gamma <- 1000
 DFE3meanS <- DFE3Gamma/(2*DFE3Nw)
 DFE3beta <- 0.3
 DFE3_truth <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS,DFE3beta)
+
+DFE3meanS_S0 <- (1000*0.93074411)/(2*DFE3Nw)
+DFE3_truth_S0 <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS_S0,DFE3beta)
+DFE3meanS_S50 <- (1000*0.67842912)/(2*DFE3Nw)
+DFE3_truth_S50 <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS_S50,DFE3beta)
+DFE3meanS_S99 <- (1000*0.04243927)/(2*DFE3Nw)
+DFE3_truth_S99 <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS_S99,DFE3beta)
+
 
 
 layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE)) # four panel figure with one empty corner
@@ -220,3 +249,57 @@ x <- seq(0, 150, by=1)
 #plot(dgamma(x, 0.3, rate = 0.3/(1000/200)), type = "l")
 #abline(v = c(1,10,100), col = "red")
 
+layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE)) # four panel figure with one empty corner
+#DFE1, with new truth adjustments added
+DFE1_matrix_mod <- t(matrix(c(c(DFE1_truth[[1]][1],DFE1_truth[[2]][1],DFE1_truth[[3]][1],DFE1_truth[[4]][1]),
+    c(DFE1_truth_S0[[1]][1],DFE1_truth_S0[[2]][1],DFE1_truth_S0[[3]][1],DFE1_truth_S0[[4]][1]),
+    c(discrete_classes[[1]][1],discrete_classes[[2]][1],discrete_classes[[3]][1],discrete_classes[[4]][1]),
+    c(DFE1_truth_S50[[1]][1],DFE1_truth_S50[[2]][1],DFE1_truth_S50[[3]][1],DFE1_truth_S50[[4]][1]),
+    c(discrete_classes[[1]][4],discrete_classes[[2]][4],discrete_classes[[3]][4],discrete_classes[[4]][4]),
+    c(DFE1_truth_S99[[1]][1],DFE1_truth_S99[[2]][1],DFE1_truth_S99[[3]][1],DFE1_truth_S99[[4]][1]),
+    c(discrete_classes[[1]][7],discrete_classes[[2]][7],discrete_classes[[3]][7],discrete_classes[[4]][7])), 
+    nr=4))
+colnames(DFE1_matrix_mod) <- c("f0", "f1", "f2", "f3")
+
+barplot(DFE1_matrix_mod, beside=T, ylab = "proportion mutations", main = "DFE1",
+    col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"))
+legend("topleft", c("truth","selfing0 truth", "selfing0", 
+    "selfing50 truth", "selfing50","selfing99 truth", "selfing99"), pch=15, 
+       col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"), 
+       bty="n")
+
+#DFE2, with new truth adjustments added
+DFE2_matrix_mod <- t(matrix(c(c(DFE2_truth[[1]][1],DFE2_truth[[2]][1],DFE2_truth[[3]][1],DFE2_truth[[4]][1]),
+    c(DFE2_truth_S0[[1]][1],DFE2_truth_S0[[2]][1],DFE2_truth_S0[[3]][1],DFE2_truth_S0[[4]][1]),
+    c(discrete_classes[[1]][2],discrete_classes[[2]][2],discrete_classes[[3]][2],discrete_classes[[4]][2]),
+    c(DFE2_truth_S50[[1]][1],DFE2_truth_S50[[2]][1],DFE2_truth_S50[[3]][1],DFE2_truth_S50[[4]][1]),
+    c(discrete_classes[[1]][5],discrete_classes[[2]][5],discrete_classes[[3]][5],discrete_classes[[4]][5]),
+    c(DFE2_truth_S99[[1]][1],DFE2_truth_S99[[2]][1],DFE2_truth_S99[[3]][1],DFE2_truth_S99[[4]][1]),
+    c(discrete_classes[[1]][8],discrete_classes[[2]][8],discrete_classes[[3]][8],discrete_classes[[4]][8])), 
+    nr=4))
+colnames(DFE2_matrix_mod) <- c("f0", "f1", "f2", "f3")
+
+barplot(DFE2_matrix_mod, beside=T, ylab = "proportion mutations", main = "DFE2",
+    col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"))
+legend("topleft", c("truth","selfing0 truth", "selfing0", 
+    "selfing50 truth", "selfing50","selfing99 truth", "selfing99"), pch=15, 
+       col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"), 
+       bty="n")
+
+#DFE3, with new truth adjustments added
+DFE3_matrix_mod <- t(matrix(c(c(DFE3_truth[[1]][1],DFE3_truth[[2]][1],DFE3_truth[[3]][1],DFE3_truth[[4]][1]),
+    c(DFE3_truth_S0[[1]][1],DFE3_truth_S0[[2]][1],DFE3_truth_S0[[3]][1],DFE3_truth_S0[[4]][1]),
+    c(discrete_classes[[1]][3],discrete_classes[[2]][3],discrete_classes[[3]][3],discrete_classes[[4]][3]),
+    c(DFE3_truth_S50[[1]][1],DFE3_truth_S50[[2]][1],DFE3_truth_S50[[3]][1],DFE3_truth_S50[[4]][1]),
+    c(discrete_classes[[1]][5],discrete_classes[[2]][5],discrete_classes[[3]][5],discrete_classes[[4]][5]),
+    c(DFE3_truth_S99[[1]][1],DFE3_truth_S99[[2]][1],DFE3_truth_S99[[3]][1],DFE3_truth_S99[[4]][1]),
+    c(discrete_classes[[1]][9],discrete_classes[[2]][9],discrete_classes[[3]][9],discrete_classes[[4]][9])), 
+    nr=4))
+colnames(DFE3_matrix_mod) <- c("f0", "f1", "f2", "f3")
+
+barplot(DFE3_matrix_mod, beside=T, ylab = "proportion mutations", main = "DFE3",
+    col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"))
+legend("topleft", c("truth","selfing0 truth", "selfing0", 
+    "selfing50 truth", "selfing50","selfing99 truth", "selfing99"), pch=15, 
+       col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"), 
+       bty="n")
