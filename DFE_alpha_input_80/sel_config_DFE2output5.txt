@@ -1,0 +1,13 @@
+data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
+site_class 1
+fold 1
+epochs 2
+mean_s_variable 1
+mean_s -0.01
+beta_variable 1
+beta 0.5
+p_additional 0
+s_additional 0 
+sfs_input_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input_80/DFE2output5.txt
+est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/DFE2output5.txt_selected
+est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/DFE2output5.txt_neutral/est_dfe.out

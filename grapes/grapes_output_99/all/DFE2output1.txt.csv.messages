@@ -1,0 +1,19 @@
+!!! Second order derivative is negative for parameter BKnsz2(-0.00010001). Moving in the other direction.
+!!! Second order derivative is negative for parameter BKscale(0.972955). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(-1.09861). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(-0.807838). Moving in the other direction.
+!!! Function at new point is greater than at current point: 4764.66>304.643. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 2526.8>304.643. Applying Felsenstein-Churchill correction: 1
+!!! Function at new point is greater than at current point: 1592.77>304.643. Applying Felsenstein-Churchill correction: 2
+!!! Felsenstein-Churchill correction applied too many times.
+Use conjugate gradients optimization.
+!!! Function at new point is greater than at current point: 227.423>209.191. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 211.569>209.191. Applying Felsenstein-Churchill correction: 1
+!!! Function at new point is greater than at current point: 211.498>209.191. Applying Felsenstein-Churchill correction: 2
+!!! Felsenstein-Churchill correction applied too many times.
+Use conjugate gradients optimization.
+!!! Function at new point is greater than at current point: 226.617>209.19. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 211.516>209.19. Applying Felsenstein-Churchill correction: 1
+!!! Function at new point is greater than at current point: 211.512>209.19. Applying Felsenstein-Churchill correction: 2
+!!! Felsenstein-Churchill correction applied too many times.
+Use conjugate gradients optimization.
