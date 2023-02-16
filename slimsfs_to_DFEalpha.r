@@ -5,8 +5,8 @@
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/SFS/eqm_selfing99/"
-path_to_DFESelfing <- "/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input_99/"
+path_to_files <- "/nas/longleaf/home/adaigle/SFS/eqm_selfing90/"
+path_to_DFESelfing <- "/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input_90/"
 #total neutral sites is 187500
 neutral_sites <- 187500
 #total selected sites are 562500
@@ -18,7 +18,7 @@ count_sfs_df_list <- lapply(
     paste(path_to_files,count_sfs_names,sep=""), 
     function(x) read.table(x, header=TRUE))
 
-#new table method
+#new table method. Not currently in use but will change to this eventually
 sfs_table <- tibble(
     name = list.files(path = path_to_files, pattern = "count.sfs"),
     matchname = sub("_count.sfs","",name),
@@ -96,7 +96,7 @@ DFE_list <- c("DFE1", "DFE2", "DFE3")
 replicates <- get(combined_df_names_list[1])$filename
 
 #clears out script to run dfe alpha 
-#write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
+write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
 
 
 dfealpha_sfs <- function(x) {
@@ -131,7 +131,7 @@ t2 50", file = neuconfigpath )
     write(paste("sfs_input_file", filepath), 
         file = neuconfigpath, append = TRUE)
     write(
-        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/", 
+        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/", 
             x, y, "_neutral", sep = ""), 
         file = neuconfigpath, append = TRUE)
     write("data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
@@ -147,11 +147,11 @@ s_additional 0 ", file = selconfigpath)
     write(paste("sfs_input_file ", filepath, sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
-        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/", 
+        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/", 
             x, y, "_selected", sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
-        paste("est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/", 
+        paste("est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/", 
             x, y, "_neutral", "/est_dfe.out", sep = ""), 
         file = selconfigpath, append = TRUE)
 
@@ -163,12 +163,13 @@ s_additional 0 ", file = selconfigpath)
         file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
 }}
 
-#lapply(DFE_list, dfealpha_sfs)
+lapply(DFE_list, dfealpha_sfs)
 
 
-path_to_polyDFE_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/polyDFE_input/"
+#path_to_polyDFE_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/polyDFE_input/"
 
-# this function creates input sfs files for polydfe
+# this function creates input sfs files for polydfe 
+# we won't be using it so its commented out for now
 #will add commands in a bit
 #polydfe_sfs <- function(x) {
 #for(y in replicates) {
@@ -194,7 +195,7 @@ path_to_polyDFE_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/polyDFE_
 
 # this function creates input sfs files for grapes
 #will add commands in a bit
-path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/grapes/grapes_input_99/"
+path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/grapes/grapes_input_90/"
 grapes_sfs <- function(x) {
 for(y in replicates) {
     neudf <- data.frame(Map(c,
@@ -219,17 +220,3 @@ for(y in replicates) {
 }}
 
 lapply(DFE_list, grapes_sfs)
-
-
-# Title - num_chrom numneusites sfs(NO 0 or FIXED) numselsites selsfs totalneusites fixedneu totalselsites fixedsel
-
-#Dn is neutral substitutions
-#Pn is neutral polymorphisms
-#Ln is total number of sites under evaluation (div and pol =)
-
-
-#pretty certain Ln and Ls should be equal in my case, bc those are total sites
-#apparently they can differ based on alignment
-
-#it is unclear if the number i have is total sites or zero class. I may have messed up the zero class as well
-# then I need to intersperse the total site value at the end and beginning. I think the zero class is excluded

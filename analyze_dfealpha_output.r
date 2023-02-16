@@ -2,6 +2,117 @@ rm(list=ls())
 library(RColorBrewer)
 library(tidyverse)
 source("/nas/longleaf/home/adaigle/DFESelfing/calculate_pi.r")
+library(reshape2)
+
+dfealpha_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
+dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
+    "/", dir(
+    paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""), pattern = "selected")
+    , sep = "")
+
+
+#table of results with columns signifying selfing%, DFE, and output
+dfealpha_colnames <- as.data.frame(c("N1", "N2", "t2", "Nw", "b", "Es", "f0","L"))
+dfealpha_raw_results <- tibble(
+    name = list.files(path = dfealpha_output_dirs, pattern = "est_dfe.out"),
+    fullpath = paste(dfealpha_output_dirs, "/", name,sep=""),
+    selfing = str_extract(fullpath, "(?<=DFE_alpha_output_)\\d+") %>% if_else(is.na(.), "0", .), #0's were empty
+    matchname = str_extract(fullpath, "(DFE)\\d+(output)\\d"), #will be useful for comparing results later, or combining with other programs
+    DFE = str_extract(matchname, "(DFE)\\d+"),
+    data = lapply(fullpath, function(x) 
+        as.data.frame(t(data.frame(matrix(unlist(strsplit(readLines(x), " ")), ncol = 2, byrow = TRUE)))) %>%
+            rownames_to_column() %>%
+            `colnames<-`(.[1,]) %>%
+            .[-1,] %>%
+            `rownames<-`(NULL))
+)
+
+df <- dfealpha_raw_results$data %>% bind_rows()
+df <- df %>% mutate(row_number = row_number())
+dfealpha_raw_results <- dfealpha_raw_results  %>% 
+    mutate(row_number = row_number())
+
+# Join the original table with the new data frame using the row numbers as the key
+dfealpha_raw_results <- dfealpha_raw_results %>% 
+    left_join(df, by = "row_number") %>% 
+    select(-data, -row_number) %>%
+    as.data.frame %>% 
+    mutate(across(.fns = ~ if(all(!is.na(as.numeric(.x)))) as.numeric(.x) else .x)) %>%
+    mutate(gamma = -2*Nw*Es) %>%
+    rename(f0_fromoutput = f0) #f0 is a dfealpha output, but I also need to name a class f0 later
+
+DFE_proportions_dfe_alpha <- function(meanGamma,beta, Nw) { 
+    # modified function to calc vector of dfe classes given gamma and beta
+    # assumes Nw is 100 bc grapes doesn't have two step
+    # need to confirm it has no modified Ne
+    meanS <- meanGamma/(2*Nw)
+
+    # this code adapted from get_dfe_class_proportions
+    s_shape <- beta
+    s_rate <- s_shape/abs(meanS)
+    x1 <- 1/(2*Nw)
+    x10 <- 10/(2*Nw)
+    x100 <- 100/(2*Nw)
+    f0 <- pgamma(x1, shape=s_shape, rate=s_rate)
+    f1 <- pgamma(x10, shape=s_shape, rate=s_rate) - f0
+    f2 <- pgamma(x100, shape=s_shape, rate=s_rate) - f1 - f0
+    f3 <- 1.0 - f2 - f1 - f0
+    #print(paste(f0, f1, f2, f3, sep=", "))
+    #return(c(list(f0), list(f1), list(f2), list(f3)))
+    return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
+}
+true_gammas <- list(
+  DFE1 = 5,
+  DFE2 = 50,
+  DFE3 = 1000
+)
+true_betas <- list(
+  DFE1 = 0.9,
+  DFE2 = 0.5,
+  DFE3 = 0.3
+)
+
+dfealpha_raw_results_wtruth <- dfealpha_raw_results %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE]))
+
+#now i run the class generator function on all outputs
+dfealpha_raw_results_wclasses <- dfealpha_raw_results_wtruth %>%
+  mutate(output = pmap(list(gamma, b, Nw), DFE_proportions_dfe_alpha)) %>%
+  unnest_wider(output) %>%
+  rename(z0 = f0) %>%  #had to rename columns bc i rerun the function
+  rename(z1 = f1) %>% 
+  rename(z2 = f2) %>% 
+  rename(z3 = f3) %>% 
+  #rename( c(t0,t1,t2,t3) = c(f0,f1,f2,f3)) %>%
+  mutate(output = pmap(list(gamma, b, Nw), DFE_proportions_dfe_alpha)) %>%
+  unnest_wider(output) %>%
+  mutate(across(.fns = ~ if(all(!is.na(as.numeric(.x)))) as.numeric(.x) else .x))
+
+dfealpha_summary <- dfealpha_raw_results_wclasses %>% 
+    group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+    rename(z0 = z0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(z1 = z1_avg) %>% 
+    rename(z2 = z2_avg) %>% 
+    rename(z3 = z3_avg) %>%
+    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(f1 = f1_avg) %>% 
+    rename(f2 = f2_avg) %>% 
+    rename(f3 = f3_avg) 
+
+  # convert the data frame to a tidy format
+dfealpha_tidy <- gather(dfealpha_summary, 
+    key = "generation", value = "value", c(z0,z1,z2,z3)) %>%
+    mutate(generation = recode(generation,
+    z0 = 'f0', 
+    z1 = 'f1', 
+    z2 = 'f2', 
+    z3 = 'f3')) %>%
+    mutate(selfing = as.character(selfing))
+
+##plotting done at bottom bc I need grapes 
 
 #create a dataframe with means for replicates of each experiment
 #also finds sd for gamma and beta from the replicates
@@ -51,20 +162,32 @@ selfing50 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_50/")
 selfing80 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/")
 selfing99 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_100/")
 
+selfing90 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/")
+selfing95 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_95/")
+
+
+
 #run function to create dataframes for each selfing percentage
 means0 <- find_means(selfing0, DFE_list, replicates)
 means50 <- find_means(selfing50, DFE_list, replicates)
 means80 <- find_means(selfing80, DFE_list, replicates)
 means99 <- find_means(selfing99, DFE_list, replicates)
 
+means90 <- find_means(selfing90, DFE_list, replicates)
+means95 <- find_means(selfing95, DFE_list, replicates)
+
+
 #betas and gammas used to generate DFE1,2,3
 truebeta <- c(0.9,0.5,0.3)
 truegamma <- c(5,50,1000)
 
 #makes a summary table showing accuracy of beta and gamma predictions
-gammabetatable <- data.frame(truebeta, means0$b, means0$betasd, means50$b, means50$betasd, 
+gammabetatable <- data.frame(truebeta, means0$b, means0$betasd, means50$b, means50$betasd,
+means80$b, means80$betasd, means90$b, means90$betasd, means95$b, means95$betasd, 
 means99$b, means99$betasd, truegamma, -as.numeric(means0$gamma), means0$gammasd, 
--as.numeric(means50$gamma), means50$gammasd, -as.numeric(means99$gamma), means99$gammasd)
+-as.numeric(means50$gamma), means50$gammasd, -as.numeric(means80$gamma), means80$gammasd,
+-as.numeric(means90$gamma), means90$gammasd,-as.numeric(means95$gamma), means95$gammasd,
+-as.numeric(means99$gamma), means99$gammasd)
 
 #makes figures showing beta and gamma predictions vs truth
 #will not be used because of the large difference, table is better
@@ -210,6 +333,30 @@ beta80 <- as.numeric(means80$b) #shape parameter
 #so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
 dfe80<-DFE_proportions(Nw80,meanGamma80,meanS80,beta80)
 
+#---------------quick dfe90 and 95 stuff
+Nw90 <- as.numeric(means90$Nw)
+#meanS <- as.numeric(args[2]) # shape = mean * rate
+meanGamma90 <- -as.numeric(means90$gamma)
+meanS90 <- meanGamma90/(2.0*Nw90)
+beta90 <- as.numeric(means90$b) #shape parameter
+
+#using 2NwS for gamma for now, wasn't quite sure what to do. 
+#vector of lists, f0, f1,f2, f4 (discrete mutation classes)
+#within each class is selfing levels(DFE1-3)
+#so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
+dfe90<-DFE_proportions(Nw90,meanGamma90,meanS90,beta90)
+
+Nw95 <- as.numeric(means95$Nw)
+#meanS <- as.numeric(args[2]) # shape = mean * rate
+meanGamma95 <- -as.numeric(means95$gamma)
+meanS95 <- meanGamma95/(2.0*Nw95)
+beta95 <- as.numeric(means95$b) #shape parameter
+
+#using 2NwS for gamma for now, wasn't quite sure what to do. 
+#vector of lists, f0, f1,f2, f4 (discrete mutation classes)
+#within each class is selfing levels(DFE1-3)
+#so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
+dfe95<-DFE_proportions(Nw95,meanGamma95,meanS95,beta95)
 
 
 layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE)) # four panel figure with one empty corner
@@ -218,15 +365,17 @@ layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE)) # four panel figure with one empt
 DFE1_matrix <- t(matrix(c(c(DFE1_truth[[1]][1],DFE1_truth[[2]][1],DFE1_truth[[3]][1],DFE1_truth[[4]][1]),
     c(discrete_classes[[1]][1],discrete_classes[[2]][1],discrete_classes[[3]][1],discrete_classes[[4]][1]),
     c(discrete_classes[[1]][4],discrete_classes[[2]][4],discrete_classes[[3]][4],discrete_classes[[4]][4]),
-    c(dfe80[[1]][1],dfe80[[2]][1],dfe80[[3]][1],dfe80[[4]][1]), 
+    c(dfe80[[1]][1],dfe80[[2]][1],dfe80[[3]][1],dfe80[[4]][1]),
+    c(dfe90[[1]][1],dfe90[[2]][1],dfe90[[3]][1],dfe90[[4]][1]),
+    c(dfe95[[1]][1],dfe95[[2]][1],dfe95[[3]][1],dfe95[[4]][1]),
     c(discrete_classes[[1]][7],discrete_classes[[2]][7],discrete_classes[[3]][7],discrete_classes[[4]][7])), 
     nr=4))
 colnames(DFE1_matrix) <- c("f0", "f1", "f2", "f3")
 
 barplot(DFE1_matrix, beside=T, ylab = "proportion mutations", main = "DFE1",
-    col=c("black", "red","blue","purple", "green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing99"), pch=15, 
-       col=c("black", "red","blue","purple", "green"), 
+    col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
+legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing90", "selfing95", "selfing99"), pch=15, 
+       col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"), 
        bty="n")
 
 # DFE2 
@@ -234,14 +383,16 @@ DFE2_matrix <- t(matrix(c(c(DFE2_truth[[1]][1],DFE2_truth[[2]][1],DFE2_truth[[3]
     c(discrete_classes[[1]][2],discrete_classes[[2]][2],discrete_classes[[3]][2],discrete_classes[[4]][2]),
     c(discrete_classes[[1]][5],discrete_classes[[2]][5],discrete_classes[[3]][5],discrete_classes[[4]][5]), 
     c(dfe80[[1]][2],dfe80[[2]][2],dfe80[[3]][2],dfe80[[4]][2]), 
+    c(dfe90[[1]][2],dfe90[[2]][2],dfe90[[3]][2],dfe90[[4]][2]),
+    c(dfe95[[1]][2],dfe95[[2]][2],dfe95[[3]][2],dfe95[[4]][2]),
     c(discrete_classes[[1]][8],discrete_classes[[2]][8],discrete_classes[[3]][8],discrete_classes[[4]][8])), 
     nr=4))
 colnames(DFE2_matrix) <- c("f0", "f1", "f2", "f3")
 
 barplot(DFE2_matrix, beside=T, ylab = "proportion mutations", main = "DFE2",
-    col=c("black", "red","blue","purple", "green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing99"), pch=15, 
-       col=c("black", "red","blue","purple", "green"), 
+    col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
+legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing90", "selfing95", "selfing99"), pch=15, 
+       col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"), 
        bty="n")
 
 # DFE3 
@@ -249,14 +400,16 @@ DFE3_matrix <- t(matrix(c(c(DFE3_truth[[1]][1],DFE3_truth[[2]][1],DFE3_truth[[3]
     c(discrete_classes[[1]][3],discrete_classes[[2]][3],discrete_classes[[3]][3],discrete_classes[[4]][3]),
     c(discrete_classes[[1]][6],discrete_classes[[2]][6],discrete_classes[[3]][6],discrete_classes[[4]][6]),
     c(dfe80[[1]][3],dfe80[[2]][3],dfe80[[3]][3],dfe80[[4]][3]),
+    c(dfe90[[1]][3],dfe90[[2]][3],dfe90[[3]][3],dfe90[[4]][3]),
+    c(dfe95[[1]][3],dfe95[[2]][3],dfe95[[3]][3],dfe95[[4]][3]),
     c(discrete_classes[[1]][9],discrete_classes[[2]][9],discrete_classes[[3]][9],discrete_classes[[4]][9])), 
     nr=4))
 colnames(DFE3_matrix) <- c("f0", "f1", "f2", "f3")
 
 barplot(DFE3_matrix, beside=T, ylab = "proportion mutations", main = "DFE3",
-    col=c("black", "red","blue","purple", "green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing99"), pch=15, 
-       col=c("black", "red","blue","purple", "green"), 
+    col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
+legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing90", "selfing95", "selfing99"), pch=15, 
+       col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"), 
        bty="n")
 
 x <- seq(0, 150, by=1)
@@ -482,7 +635,6 @@ df_true_tidy <- gather(grapes_gammazero_simple_summary,
     select(1,13:14) %>% distinct() %>%
     mutate(selfing = "True0")
 
-
 # create a bar plot with separate panels for each DFE
 ggplot(bind_rows(df_true_tidy,df_tidy) , aes(x = generation, y = value, fill = selfing)) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
@@ -491,13 +643,46 @@ ggplot(bind_rows(df_true_tidy,df_tidy) , aes(x = generation, y = value, fill = s
 
 
 # Define the order of the selfing levels
-selfing_order <- c("True0", 0, 50, 80, 99)
+selfing_order <- c("True0", 0, 50, 80, 90, 95, 99)
 
 # Create the grouped bar chart with custom selfing order
-ggplot(bind_rows(df_true_tidy,df_tidy), aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "99")))) +
+ggplot(bind_rows(df_true_tidy,df_tidy), aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "90", "95", "99")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   facet_wrap(~ DFE, nrow = 2) +
   labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
-  scale_fill_manual(values = c("black", "red","blue","purple", "green"))
+  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
 
   
+dfealpha_for_plotting <- bind_rows(df_true_tidy,dfealpha_tidy) %>%
+    select(1:4,32,34,36,38) %>%
+    melt() %>% 
+    mutate(value = ifelse(is.na(value), 0, value))
+
+# filter sd's
+dfealpha_for_plotting <- dfealpha_for_plotting %>% 
+  filter(variable == "value" | paste0(generation, "_sd") == variable)
+
+dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$variable), "sd", "value")  
+
+voodoo <- pivot_wider(dfealpha_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")
+# Define the order of the selfing levels
+selfing_order <- c("True0", 0, 50, 80, 90, 95, 100)
+
+# Create the grouped bar chart with custom selfing order
+ggplot(voodoo, aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "90", "95", "100")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 2) +
+  labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
+#now I take the average, getting avg and sd for my classes
+#I could also probably just ggplot but I think we will always 
+#be using the averages for now
+
+# create example data
+df <- data.frame(generation = rep(c("f0", "f1", "f2", "f3"), each = 5),
+                 variable = rep(c("value", "f0_sd", "f1_sd", "f2_sd", "f3_sd"), times = 4))
+
+
+
+  paste0()
