@@ -1,0 +1,39 @@
+!!! Second order derivative is negative for parameter pos_prop(-0.549306). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(-1.09861). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(-0.424704). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(2.57014). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(2.05033). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(1.48894). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(6.66642). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(6.11612). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(5.86955). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(5.41366). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(4.9624). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(4.47446). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(3.94659). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(3.44681). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(2.93558). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(2.42046). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(1.84986). Moving in the other direction.
+!!! Function at new point is greater than at current point: 104.458>103.337. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.394>103.337. Applying Felsenstein-Churchill correction: 1
+!!! Function at new point is greater than at current point: 103.359>103.321. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.342>103.308. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.316>103.295. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.292>103.283. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.275>103.272. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.263>103.263. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.253>103.253. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.249>103.248. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.245>103.243. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.241>103.24. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.238>103.237. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.234>103.232. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.228>103.227. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.218>103.217. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.23>103.201. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.197>103.187. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.182>103.179. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 103.177>103.176. Applying Felsenstein-Churchill correction: 0
+!!! Second order derivative is negative for parameter negGshape(-1.27879). Moving in the other direction.
+!!! Function at new point is greater than at current point: 103.153>103.153. Applying Felsenstein-Churchill correction: 0

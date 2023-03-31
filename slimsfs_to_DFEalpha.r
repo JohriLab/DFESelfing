@@ -5,8 +5,11 @@
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/SFS/eqm_selfing90/"
-path_to_DFESelfing <- "/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input_90/"
+path_to_files <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/SFS/0/"
+path_to_DFESelfing <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/"
+path_to_dfe_alpha_output <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/DFE_alpha_dom_output_0/"
+path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_dom_output_0/"
+
 #total neutral sites is 187500
 neutral_sites <- 187500
 #total selected sites are 562500
@@ -83,11 +86,80 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
     add_column(get(x), selected_sites - rowSums(get(x)[2:101]), .before = 2))
 }
 
-#now for each experiment, I need to loop through each output, 
-#pasting neu and sel together in a file
+#plot row as DF
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 3:101]))
+#
+#
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 3:101]))
+#
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[2, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 50:102]))
+#
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[2, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 50:102]))
 
-#code to get output1 from DFE1_nue
-
+#complex fraction change stuff
+#cell to frac
+#neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[3, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 2:102]))
+#sel2frac <- unlist(eqm_selfing99_DFE1_sel_100_m2[3, 2:102])/sum(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 2:102]))
+#barplot(sel2frac-neu2frac)
+#div <- sel2frac/neu2frac
+#div[is.infinite(div)] <- 0
+#barplot(div)
+#
+#neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[4, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 2:102]))
+#sel2frac <- unlist(eqm_selfing99_DFE1_sel_100_m2[4, 2:102])/sum(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 2:102]))
+#barplot(sel2frac-neu2frac)
+#div <- sel2frac/neu2frac
+#div[is.infinite(div)] <- 0
+#barplot(div)
+#
+#neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[5, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 2:102]))
+#sel2frac <- unlist(eqm_selfing99_DFE1_sel_100_m2[5, 2:102])/sum(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 2:102]))
+#barplot(sel2frac-neu2frac)
+#div <- sel2frac/neu2frac
+#div[is.infinite(div)] <- 0
+#barplot(div)
+#
+##dfe2
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[5, 3:101]))
+#
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[5, 3:101]))
+#
+## set up the plot layout
+#par(mfrow = c(2, 3), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0), xpd = TRUE)
+#for (bp in list(bp1, bp2, bp3, bp4, bp5)) {
+#  axis(1, at = bp, labels = FALSE, tick = FALSE)
+#  axis(2, ylim = c(0, max(bp)), las = 1)
+#  box()
+#}
+##now for each experiment, I need to loop through each output, 
+##pasting neu and sel together in a file
+#
+##code to get output1 from DFE1_nue
+#
 DFE_list <- c("DFE1", "DFE2", "DFE3")
 
 #this assumes all files in SFS folder have same number and name of replicates
@@ -96,7 +168,7 @@ DFE_list <- c("DFE1", "DFE2", "DFE3")
 replicates <- get(combined_df_names_list[1])$filename
 
 #clears out script to run dfe alpha 
-write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
+#write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
 
 
 dfealpha_sfs <- function(x) {
@@ -114,14 +186,13 @@ dfealpha_sfs <- function(x) {
     selconfigpath <- paste(path_to_DFESelfing, "sel_config_", x, y, sep = "")
     df_stripped <- df[2:102]
     names(df_stripped) <- NULL
-    #write to fle with proper header structure. Assumes 100 alleles were chosen
+    write to fle with proper header structure. Assumes 100 alleles were chosen
     write(1, file = filepath)
     write(100, file = filepath, append = TRUE)
     write.table(df_stripped, row.names = FALSE, quote = FALSE, 
-        file = filepath, append = TRUE)
-
-    #write neutral and selected config files
-    write("data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
+       file = filepath, append = TRUE)#
+    write neutral and selected config files
+    write("data_path_1 /nas/longleaf/home/adaigle/work/johri_elegans/data
 site_class 0
 fold 1
 epochs 2
@@ -131,10 +202,10 @@ t2 50", file = neuconfigpath )
     write(paste("sfs_input_file", filepath), 
         file = neuconfigpath, append = TRUE)
     write(
-        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/", 
+        paste("est_dfe_results_dir ", path_to_dfe_alpha_output, 
             x, y, "_neutral", sep = ""), 
         file = neuconfigpath, append = TRUE)
-    write("data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
+    write("data_path_1 /nas/longleaf/home/adaigle/work/johri_elegans/data
 site_class 1
 fold 1
 epochs 2
@@ -147,11 +218,11 @@ s_additional 0 ", file = selconfigpath)
     write(paste("sfs_input_file ", filepath, sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
-        paste("est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/", 
+        paste("est_dfe_results_dir ", path_to_dfe_alpha_output, 
             x, y, "_selected", sep = ""), 
         file = selconfigpath, append = TRUE)
     write(
-        paste("est_dfe_demography_results_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/", 
+        paste("est_dfe_demography_results_file ", path_to_dfe_alpha_output, 
             x, y, "_neutral", "/est_dfe.out", sep = ""), 
         file = selconfigpath, append = TRUE)
 
@@ -161,6 +232,7 @@ s_additional 0 ", file = selconfigpath)
         file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
     write(paste("./est_dfe -c ", selconfigpath, sep = ""), 
         file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
+return(assign(df_stripped, paste0(x,y)))
 }}
 
 lapply(DFE_list, dfealpha_sfs)
@@ -195,7 +267,6 @@ lapply(DFE_list, dfealpha_sfs)
 
 # this function creates input sfs files for grapes
 #will add commands in a bit
-path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/grapes/grapes_input_90/"
 grapes_sfs <- function(x) {
 for(y in replicates) {
     neudf <- data.frame(Map(c,

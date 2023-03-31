@@ -37,7 +37,7 @@ dfealpha_raw_results <- dfealpha_raw_results %>%
     left_join(df, by = "row_number") %>% 
     select(-data, -row_number) %>%
     as.data.frame %>% 
-    mutate(across(.fns = ~ if(all(!is.na(as.numeric(.x)))) as.numeric(.x) else .x)) %>%
+    mutate_at(vars(7:14), as.numeric) %>%
     mutate(gamma = -2*Nw*Es) %>%
     rename(f0_fromoutput = f0) #f0 is a dfealpha output, but I also need to name a class f0 later
 
@@ -60,7 +60,9 @@ DFE_proportions_dfe_alpha <- function(meanGamma,beta, Nw) {
     #print(paste(f0, f1, f2, f3, sep=", "))
     #return(c(list(f0), list(f1), list(f2), list(f3)))
     return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
-}
+} # for non DFEalpha 
+# to do this ina  way that makes more sense
+#piemp, get Nemperical, and use that ias your Nw for now one
 true_gammas <- list(
   DFE1 = 5,
   DFE2 = 50,
@@ -87,8 +89,8 @@ dfealpha_raw_results_wclasses <- dfealpha_raw_results_wtruth %>%
   rename(z3 = f3) %>% 
   #rename( c(t0,t1,t2,t3) = c(f0,f1,f2,f3)) %>%
   mutate(output = pmap(list(gamma, b, Nw), DFE_proportions_dfe_alpha)) %>%
-  unnest_wider(output) %>%
-  mutate(across(.fns = ~ if(all(!is.na(as.numeric(.x)))) as.numeric(.x) else .x))
+  unnest_wider(output) 
+  #mutate(across(.fns = ~ if(all(!is.na(as.numeric(.x)))) as.numeric(.x) else .x))
 
 dfealpha_summary <- dfealpha_raw_results_wclasses %>% 
     group_by(selfing, DFE) %>%
@@ -112,388 +114,11 @@ dfealpha_tidy <- gather(dfealpha_summary,
     z3 = 'f3')) %>%
     mutate(selfing = as.character(selfing))
 
-##plotting done at bottom bc I need grapes 
-
-#create a dataframe with means for replicates of each experiment
-#also finds sd for gamma and beta from the replicates
-find_means <- function(path_to_outputs, DFE_list, replicates) {
-    stats <- as.data.frame(c("N1", "N2", "t2", "Nw", "b", "Es", "f0","L"))
-    colnames(stats) <- "stats"
-
-    for(x in DFE_list) {
-        for(y in replicates) {
-            data <- readLines(
-                paste(path_to_outputs, 
-                x, y, ".txt_selected/est_dfe.out", sep = ""))
-            vector_data <- unlist(strsplit(data, " "))
-            df <- data.frame(matrix(vector_data, ncol = 2, byrow = TRUE))
-            colnames(df) <- c("stats", paste(x,y,sep=""))
-            stats <- merge(stats,df)
-        }
-    }
-
-    stats <- as.data.frame(t(stats))
-    names(stats) <- stats[1,]
-    stats <- stats[-1,]
-    stats$NwEs <- as.numeric(stats$Es) * as.numeric(stats$Nw)
-    stats$gamma <- 2*stats$NwEs
-
-    means <- data.frame()
-    sdbeta <- c()
-    sdgamma <- c()
-    for(x in DFE_list) {
-        tmpdf <- stats[grep(x, rownames(stats)),]
-        tmpdf <- as.data.frame(sapply(tmpdf, FUN=as.numeric))
-        means <- rbind(means, c(x, sapply(tmpdf, FUN=mean)))
-        sdbeta <- c(sdbeta, sd(as.numeric(tmpdf$b)))
-        sdgamma <- c(sdgamma, sd(as.numeric(tmpdf$gamma)))
-
-    }
-    colnames(means) <- c("Experiment", colnames(stats))
-    means$betasd <- sdbeta
-    means$gammasd <- sdgamma
-    return(means)
-}
-
-DFE_list <- c("DFE1", "DFE2", "DFE3")
-replicates <- c("output1", "output2","output3","output4","output5")
-selfing0 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output/")
-selfing50 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_50/")
-selfing80 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_80/")
-selfing99 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_100/")
-
-selfing90 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_90/")
-selfing95 <- ("/nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_95/")
-
-
-
-#run function to create dataframes for each selfing percentage
-means0 <- find_means(selfing0, DFE_list, replicates)
-means50 <- find_means(selfing50, DFE_list, replicates)
-means80 <- find_means(selfing80, DFE_list, replicates)
-means99 <- find_means(selfing99, DFE_list, replicates)
-
-means90 <- find_means(selfing90, DFE_list, replicates)
-means95 <- find_means(selfing95, DFE_list, replicates)
-
-
-#betas and gammas used to generate DFE1,2,3
-truebeta <- c(0.9,0.5,0.3)
-truegamma <- c(5,50,1000)
-
-#makes a summary table showing accuracy of beta and gamma predictions
-gammabetatable <- data.frame(truebeta, means0$b, means0$betasd, means50$b, means50$betasd,
-means80$b, means80$betasd, means90$b, means90$betasd, means95$b, means95$betasd, 
-means99$b, means99$betasd, truegamma, -as.numeric(means0$gamma), means0$gammasd, 
--as.numeric(means50$gamma), means50$gammasd, -as.numeric(means80$gamma), means80$gammasd,
--as.numeric(means90$gamma), means90$gammasd,-as.numeric(means95$gamma), means95$gammasd,
--as.numeric(means99$gamma), means99$gammasd)
-
-#makes figures showing beta and gamma predictions vs truth
-#will not be used because of the large difference, table is better
-test <- t(matrix(c(truebeta,as.numeric(means0$b),as.numeric(means50$b), as.numeric(means99$b)), nr=3))
-colnames(test) <- c("DFE1", "DFE2", "DFE3")
-barplot(test, beside=T, ylab = "beta parameter",
-    col=c("black", "red","blue","green"))
-legend("topleft", c("truth","selfing0","selfing50", "selfing99"), pch=15, 
-       col=c("black", "red","blue","green"), 
-       bty="n")
-
-threebeta <- t(matrix(c(truebeta,as.numeric(means0$b),as.numeric(means50$b)), nr=3))
-colnames(threebeta) <- c("DFE1", "DFE2", "DFE3")
-
-barplot(threebeta, beside=T, ylab = "beta parameter",
-    col=c("black", "red","blue"))
-legend("topleft", c("truth","selfing0","selfing50"), pch=15, 
-       col=c("black", "red","blue"), 
-       bty="n")
-
-barplot(t(matrix(c(truegamma,-as.numeric(means0$gamma),-as.numeric(means50$gamma)), nr=3)), beside=T,
-    col=c("black",col=c("black", "red","blue")))
-legend("topleft", c("truth","selfing0","selfing50"), pch=15, 
-       col=c("black", "red","blue"), 
-       bty="n")
-
-barplot(t(matrix(c(truegamma,-as.numeric(means0$gamma),-as.numeric(means50$gamma), -as.numeric(means99$gamma)), nr=3)), beside=T,
-    col=c("black", "red","blue","green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing99"), pch=15, 
-       col=c("black", "red","blue","green"), 
-       bty="n")
-
-#------------------------------------
-#This is to get the proportion of f0, f1, f2 and f3 in case of diploid and haploid:
-
-DFE_proportions <- function(Nw,meanGamma,meanS,beta) {
-# this code adapted from get_dfe_class_proportions
-s_shape <- beta
-s_rate <- s_shape/abs(meanS)
-
-print("gamma distribution with shape parameter, alpha:")
-print(s_shape)
-print("gamma distribution with rate parameter, beta:")
-print(s_rate)
-#these statements refer to the wikipedia way of describing gamma
-#https://en.wikipedia.org/wiki/Gamma_distribution
-#not how r categorizes them!
-
-print ("DFE classes in terms of Nws: ")
-x1 <- 1/(Nw)
-x10 <- 10/(Nw)
-x100 <- 100/(Nw)
-f0 <- pgamma(x1, shape=s_shape, rate=s_rate)
-f1 <- pgamma(x10, shape=s_shape, rate=s_rate) - f0
-f2 <- pgamma(x100, shape=s_shape, rate=s_rate) - f1 - f0
-f3 <- 1.0 - f2 - f1 - f0
-print(paste(f0, f1, f2, f3, sep=", "))
-
-print ("DFE classes in terms of 2Nws: ")
-x1 <- 1/(2*Nw)
-x10 <- 10/(2*Nw)
-x100 <- 100/(2*Nw)
-f0 <- pgamma(x1, shape=s_shape, rate=s_rate)
-f1 <- pgamma(x10, shape=s_shape, rate=s_rate) - f0
-f2 <- pgamma(x100, shape=s_shape, rate=s_rate) - f1 - f0
-f3 <- 1.0 - f2 - f1 - f0
-print(paste(f0, f1, f2, f3, sep=", "))
-return(c(list(f0), list(f1), list(f2), list(f3)))
-}
-
-#not quite sure what the control Nw should be. Putting 100 for now
-Nw <- c(as.numeric(means0$Nw), as.numeric(means50$Nw), as.numeric(means99$Nw))
-#meanS <- as.numeric(args[2]) # shape = mean * rate
-meanGamma <- c(-as.numeric(means0$gamma), -as.numeric(means50$gamma), -as.numeric(means99$gamma))
-meanS <- meanGamma/(2.0*Nw)
-beta <- c(as.numeric(means0$b), as.numeric(means50$b), as.numeric(means99$b)) #shape parameter
-
-#using 2NwS for gamma for now, wasn't quite sure what to do. 
-#vector of lists, f0, f1,f2, f4 (discrete mutation classes)
-#within each class is selfing levels(DFE1-3)
-#so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
-discrete_classes<-DFE_proportions(Nw,meanGamma,meanS,beta)
-
-B <- (c(
-0.94919771, 0.93074411, 0.89399308, 0.70231493, 0.67842912, 0.61559224, 0.16699000, 0.04243927, 0.04826596
-))
-#also get vectors for three true DFEs
-## DFE1 true discrete
-#followed by three adjustments based on pi calculations for DFE
-DFE1Nw <- 100
-DFE1Gamma <- 5
-DFE1meanS <- DFE1Gamma/(2*DFE1Nw)
-DFE1beta <- 0.9
-DFE1_truth <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS,DFE1beta)
-
-DFE1meanS_S0 <- (5*0.94919771)/(2*DFE1Nw)
-DFE1_truth_S0 <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS_S0,DFE1beta)
-
-DFE1meanS_S50 <- (5*0.70231493)/(2*DFE1Nw)
-DFE1_truth_S50 <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS_S50,DFE1beta)
-
-DFE1meanS_S99 <- (5*0.16699000)/(2*DFE1Nw)
-DFE1_truth_S99 <- DFE_proportions(DFE1Nw,DFE1Gamma,DFE1meanS_S99,DFE1beta)
-
-
-## DFE2 true discrete
-DFE2Nw <- 100
-DFE2Gamma <- 50
-DFE2meanS <- DFE2Gamma/(2*DFE2Nw)
-DFE2beta <- 0.5
-DFE2_truth <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS,DFE2beta)
-
-DFE2meanS_S0 <- (50*0.93074411)/(2*DFE2Nw)
-DFE2_truth_S0 <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS_S0,DFE2beta)
-DFE2meanS_S50 <- (50*0.67842912)/(2*DFE2Nw)
-DFE2_truth_S50 <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS_S50,DFE2beta)
-DFE2meanS_S99 <- (50*0.04243927)/(2*DFE2Nw)
-DFE2_truth_S99 <- DFE_proportions(DFE2Nw,DFE2Gamma,DFE2meanS_S99,DFE2beta)
-
-## DFE3 true discrete
-DFE3Nw <- 100
-DFE3Gamma <- 1000
-DFE3meanS <- DFE3Gamma/(2*DFE3Nw)
-DFE3beta <- 0.3
-DFE3_truth <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS,DFE3beta)
-
-DFE3meanS_S0 <- (1000*0.93074411)/(2*DFE3Nw)
-DFE3_truth_S0 <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS_S0,DFE3beta)
-DFE3meanS_S50 <- (1000*0.67842912)/(2*DFE3Nw)
-DFE3_truth_S50 <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS_S50,DFE3beta)
-DFE3meanS_S99 <- (1000*0.04243927)/(2*DFE3Nw)
-DFE3_truth_S99 <- DFE_proportions(DFE3Nw,DFE3Gamma,DFE3meanS_S99,DFE3beta)
-
-Nw80 <- as.numeric(means80$Nw)
-#meanS <- as.numeric(args[2]) # shape = mean * rate
-meanGamma80 <- -as.numeric(means80$gamma)
-meanS80 <- meanGamma80/(2.0*Nw80)
-beta80 <- as.numeric(means80$b) #shape parameter
-
-#using 2NwS for gamma for now, wasn't quite sure what to do. 
-#vector of lists, f0, f1,f2, f4 (discrete mutation classes)
-#within each class is selfing levels(DFE1-3)
-#so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
-dfe80<-DFE_proportions(Nw80,meanGamma80,meanS80,beta80)
-
-#---------------quick dfe90 and 95 stuff
-Nw90 <- as.numeric(means90$Nw)
-#meanS <- as.numeric(args[2]) # shape = mean * rate
-meanGamma90 <- -as.numeric(means90$gamma)
-meanS90 <- meanGamma90/(2.0*Nw90)
-beta90 <- as.numeric(means90$b) #shape parameter
-
-#using 2NwS for gamma for now, wasn't quite sure what to do. 
-#vector of lists, f0, f1,f2, f4 (discrete mutation classes)
-#within each class is selfing levels(DFE1-3)
-#so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
-dfe90<-DFE_proportions(Nw90,meanGamma90,meanS90,beta90)
-
-Nw95 <- as.numeric(means95$Nw)
-#meanS <- as.numeric(args[2]) # shape = mean * rate
-meanGamma95 <- -as.numeric(means95$gamma)
-meanS95 <- meanGamma95/(2.0*Nw95)
-beta95 <- as.numeric(means95$b) #shape parameter
-
-#using 2NwS for gamma for now, wasn't quite sure what to do. 
-#vector of lists, f0, f1,f2, f4 (discrete mutation classes)
-#within each class is selfing levels(DFE1-3)
-#so 0selfing DFE1,2,3 ; 50 selfing DFE1-3 etc.
-dfe95<-DFE_proportions(Nw95,meanGamma95,meanS95,beta95)
-
-
-layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE)) # four panel figure with one empty corner
-#DFE1 plot first 
-#locations 1, 4, 9 in list 
-DFE1_matrix <- t(matrix(c(c(DFE1_truth[[1]][1],DFE1_truth[[2]][1],DFE1_truth[[3]][1],DFE1_truth[[4]][1]),
-    c(discrete_classes[[1]][1],discrete_classes[[2]][1],discrete_classes[[3]][1],discrete_classes[[4]][1]),
-    c(discrete_classes[[1]][4],discrete_classes[[2]][4],discrete_classes[[3]][4],discrete_classes[[4]][4]),
-    c(dfe80[[1]][1],dfe80[[2]][1],dfe80[[3]][1],dfe80[[4]][1]),
-    c(dfe90[[1]][1],dfe90[[2]][1],dfe90[[3]][1],dfe90[[4]][1]),
-    c(dfe95[[1]][1],dfe95[[2]][1],dfe95[[3]][1],dfe95[[4]][1]),
-    c(discrete_classes[[1]][7],discrete_classes[[2]][7],discrete_classes[[3]][7],discrete_classes[[4]][7])), 
-    nr=4))
-colnames(DFE1_matrix) <- c("f0", "f1", "f2", "f3")
-
-barplot(DFE1_matrix, beside=T, ylab = "proportion mutations", main = "DFE1",
-    col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing90", "selfing95", "selfing99"), pch=15, 
-       col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"), 
-       bty="n")
-
-# DFE2 
-DFE2_matrix <- t(matrix(c(c(DFE2_truth[[1]][1],DFE2_truth[[2]][1],DFE2_truth[[3]][1],DFE2_truth[[4]][1]),
-    c(discrete_classes[[1]][2],discrete_classes[[2]][2],discrete_classes[[3]][2],discrete_classes[[4]][2]),
-    c(discrete_classes[[1]][5],discrete_classes[[2]][5],discrete_classes[[3]][5],discrete_classes[[4]][5]), 
-    c(dfe80[[1]][2],dfe80[[2]][2],dfe80[[3]][2],dfe80[[4]][2]), 
-    c(dfe90[[1]][2],dfe90[[2]][2],dfe90[[3]][2],dfe90[[4]][2]),
-    c(dfe95[[1]][2],dfe95[[2]][2],dfe95[[3]][2],dfe95[[4]][2]),
-    c(discrete_classes[[1]][8],discrete_classes[[2]][8],discrete_classes[[3]][8],discrete_classes[[4]][8])), 
-    nr=4))
-colnames(DFE2_matrix) <- c("f0", "f1", "f2", "f3")
-
-barplot(DFE2_matrix, beside=T, ylab = "proportion mutations", main = "DFE2",
-    col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing90", "selfing95", "selfing99"), pch=15, 
-       col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"), 
-       bty="n")
-
-# DFE3 
-DFE3_matrix <- t(matrix(c(c(DFE3_truth[[1]][1],DFE3_truth[[2]][1],DFE3_truth[[3]][1],DFE3_truth[[4]][1]),
-    c(discrete_classes[[1]][3],discrete_classes[[2]][3],discrete_classes[[3]][3],discrete_classes[[4]][3]),
-    c(discrete_classes[[1]][6],discrete_classes[[2]][6],discrete_classes[[3]][6],discrete_classes[[4]][6]),
-    c(dfe80[[1]][3],dfe80[[2]][3],dfe80[[3]][3],dfe80[[4]][3]),
-    c(dfe90[[1]][3],dfe90[[2]][3],dfe90[[3]][3],dfe90[[4]][3]),
-    c(dfe95[[1]][3],dfe95[[2]][3],dfe95[[3]][3],dfe95[[4]][3]),
-    c(discrete_classes[[1]][9],discrete_classes[[2]][9],discrete_classes[[3]][9],discrete_classes[[4]][9])), 
-    nr=4))
-colnames(DFE3_matrix) <- c("f0", "f1", "f2", "f3")
-
-barplot(DFE3_matrix, beside=T, ylab = "proportion mutations", main = "DFE3",
-    col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
-legend("topleft", c("truth","selfing0","selfing50","selfing80", "selfing90", "selfing95", "selfing99"), pch=15, 
-       col=c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"), 
-       bty="n")
-
-x <- seq(0, 150, by=1)
-#truth value gammas just to see what they look like
-#plot(dgamma(x, 0.9, rate = 0.9/(5/200)), type = "l")
-#abline(v = c(1,10,100), col = "red")
-#plot(dgamma(x, 0.5, rate = 0.5/(50/200)), type = "l")
-#abline(v = c(1,10,100), col = "red")
-#plot(dgamma(x, 0.3, rate = 0.3/(1000/200)), type = "l")
-#abline(v = c(1,10,100), col = "red")
-
-layout(matrix(c(1,2,3,4), 2, 2, byrow = TRUE)) # four panel figure with one empty corner
-#DFE1, with new truth adjustments added
-DFE1_matrix_mod <- t(matrix(c(c(DFE1_truth[[1]][1],DFE1_truth[[2]][1],DFE1_truth[[3]][1],DFE1_truth[[4]][1]),
-    c(DFE1_truth_S0[[1]][1],DFE1_truth_S0[[2]][1],DFE1_truth_S0[[3]][1],DFE1_truth_S0[[4]][1]),
-    c(discrete_classes[[1]][1],discrete_classes[[2]][1],discrete_classes[[3]][1],discrete_classes[[4]][1]),
-    c(DFE1_truth_S50[[1]][1],DFE1_truth_S50[[2]][1],DFE1_truth_S50[[3]][1],DFE1_truth_S50[[4]][1]),
-    c(discrete_classes[[1]][4],discrete_classes[[2]][4],discrete_classes[[3]][4],discrete_classes[[4]][4]),
-    c(DFE1_truth_S99[[1]][1],DFE1_truth_S99[[2]][1],DFE1_truth_S99[[3]][1],DFE1_truth_S99[[4]][1]),
-    c(discrete_classes[[1]][7],discrete_classes[[2]][7],discrete_classes[[3]][7],discrete_classes[[4]][7])), 
-    nr=4))
-colnames(DFE1_matrix_mod) <- c("f0", "f1", "f2", "f3")
-
-barplot(DFE1_matrix_mod, beside=T, ylab = "proportion mutations", main = "DFE1",
-    col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"))
-legend("topleft", c("truth","selfing0 truth", "selfing0", 
-    "selfing50 truth", "selfing50","selfing99 truth", "selfing99"), pch=15, 
-       col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"), 
-       bty="n")
-
-#DFE2, with new truth adjustments added
-DFE2_matrix_mod <- t(matrix(c(c(DFE2_truth[[1]][1],DFE2_truth[[2]][1],DFE2_truth[[3]][1],DFE2_truth[[4]][1]),
-    c(DFE2_truth_S0[[1]][1],DFE2_truth_S0[[2]][1],DFE2_truth_S0[[3]][1],DFE2_truth_S0[[4]][1]),
-    c(discrete_classes[[1]][2],discrete_classes[[2]][2],discrete_classes[[3]][2],discrete_classes[[4]][2]),
-    c(DFE2_truth_S50[[1]][1],DFE2_truth_S50[[2]][1],DFE2_truth_S50[[3]][1],DFE2_truth_S50[[4]][1]),
-    c(discrete_classes[[1]][5],discrete_classes[[2]][5],discrete_classes[[3]][5],discrete_classes[[4]][5]),
-    c(DFE2_truth_S99[[1]][1],DFE2_truth_S99[[2]][1],DFE2_truth_S99[[3]][1],DFE2_truth_S99[[4]][1]),
-    c(discrete_classes[[1]][8],discrete_classes[[2]][8],discrete_classes[[3]][8],discrete_classes[[4]][8])), 
-    nr=4))
-colnames(DFE2_matrix_mod) <- c("f0", "f1", "f2", "f3")
-
-barplot(DFE2_matrix_mod, beside=T, ylab = "proportion mutations", main = "DFE2",
-    col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"))
-legend("topleft", c("truth","selfing0 truth", "selfing0", 
-    "selfing50 truth", "selfing50","selfing99 truth", "selfing99"), pch=15, 
-       col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"), 
-       bty="n")
-
-#DFE3, with new truth adjustments added
-DFE3_matrix_mod <- t(matrix(c(c(DFE3_truth[[1]][1],DFE3_truth[[2]][1],DFE3_truth[[3]][1],DFE3_truth[[4]][1]),
-    c(DFE3_truth_S0[[1]][1],DFE3_truth_S0[[2]][1],DFE3_truth_S0[[3]][1],DFE3_truth_S0[[4]][1]),
-    c(discrete_classes[[1]][3],discrete_classes[[2]][3],discrete_classes[[3]][3],discrete_classes[[4]][3]),
-    c(DFE3_truth_S50[[1]][1],DFE3_truth_S50[[2]][1],DFE3_truth_S50[[3]][1],DFE3_truth_S50[[4]][1]),
-    c(discrete_classes[[1]][6],discrete_classes[[2]][6],discrete_classes[[3]][6],discrete_classes[[4]][6]),
-    c(DFE3_truth_S99[[1]][1],DFE3_truth_S99[[2]][1],DFE3_truth_S99[[3]][1],DFE3_truth_S99[[4]][1]),
-    c(discrete_classes[[1]][9],discrete_classes[[2]][9],discrete_classes[[3]][9],discrete_classes[[4]][9])), 
-    nr=4))
-colnames(DFE3_matrix_mod) <- c("f0", "f1", "f2", "f3")
-
-barplot(DFE3_matrix_mod, beside=T, ylab = "proportion mutations", main = "DFE3",
-    col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"))
-legend("topleft", c("truth","selfing0 truth", "selfing0", 
-    "selfing50 truth", "selfing50","selfing99 truth", "selfing99"), pch=15, 
-       col=c("black", "#be5757","red","#41419b", "blue","#85be85", "green"), 
-       bty="n")
-
-
-DFE3_matrix_mod <- t(matrix(c(c(DFE3_truth[[1]][1],DFE3_truth[[2]][1],DFE3_truth[[3]][1],DFE3_truth[[4]][1]),
-    c(DFE3_truth_S0[[1]][1],DFE3_truth_S0[[2]][1],DFE3_truth_S0[[3]][1],DFE3_truth_S0[[4]][1]),
-    c(discrete_classes[[1]][3],discrete_classes[[2]][3],discrete_classes[[3]][3],discrete_classes[[4]][3]),
-    c(DFE3_truth_S50[[1]][1],DFE3_truth_S50[[2]][1],DFE3_truth_S50[[3]][1],DFE3_truth_S50[[4]][1]),
-    c(discrete_classes[[1]][6],discrete_classes[[2]][6],discrete_classes[[3]][6],discrete_classes[[4]][6]),
-    c(DFE3_truth_S99[[1]][1],DFE3_truth_S99[[2]][1],DFE3_truth_S99[[3]][1],DFE3_truth_S99[[4]][1]),
-    c(discrete_classes[[1]][9],discrete_classes[[2]][9],discrete_classes[[3]][9],discrete_classes[[4]][9])), 
-    nr=4))
-
-
-# start grapes stuff, keeping separate for now
-rm(list=ls())
-library(tidyverse)
+#_________________________________________________________________________________
 
 #read in all selfing %, dfes, and experiments
 grapes_dir <- "/nas/longleaf/home/adaigle/DFESelfing/grapes/"
-output_dirs <- paste(grapes_dir, dir(grapes_dir, pattern = "output"), "/all", sep = "")
+output_dirs <- paste(grapes_dir, dir(grapes_dir, pattern = "output_\\d"), "/all", sep = "")
 
 #table of results with columns signifying selfing%, DFE, and output
 grapes_raw_results <- tibble(
@@ -535,10 +160,6 @@ grapes_gammazero_raw_results <- grapes_gammazero_raw_results %>%
 # I originally tried using table of dataframes, but got weird
 # for now I'll take one experiment at a time
 
-grapes_gammazero_summary <- grapes_gammazero_raw_results %>% 
-    group_by(selfing, DFE) %>%
-    summarize(across(where(is.numeric), list(avg = mean, sd = sd)))
-
 true_gammas <- list(
   DFE1 = 5,
   DFE2 = 50,
@@ -550,18 +171,7 @@ true_betas <- list(
   DFE3 = 0.3
 )
 
-grapes_gammazero_simple_summary <- 
-    grapes_gammazero_summary[
-        c('DFE','selfing', 'GammaZero.negGmean_avg', 
-            'GammaZero.negGmean_sd', 'GammaZero.negGshape_avg',
-            'GammaZero.negGshape_sd')] %>%
-    group_by(DFE) %>%
-    mutate(true_mean = unlist(true_gammas[DFE])) %>%
-    mutate(true_shape = unlist(true_betas[DFE]))
-
-
-
-grapes_gammazero_simple_summary <- grapes_gammazero_simple_summary %>%
+grapes_raw_results_wtruth <- grapes_gammazero_raw_results %>%
     group_by(DFE) %>%
     mutate(true_mean = unlist(true_gammas[DFE])) %>%
     mutate(true_shape = unlist(true_betas[DFE]))
@@ -571,32 +181,132 @@ DFE_proportions_grapes <- function(meanGamma,beta) {
     # modified function to calc vector of dfe classes given gamma and beta
     # assumes Nw is 100 bc grapes doesn't have two step
     # need to confirm it has no modified Ne
-    Nw <- 100 # assuming this is what we should do? 
+    Nw <- 100 
     meanS <- meanGamma/(2*Nw)
 
     # this code adapted from get_dfe_class_proportions
     s_shape <- beta
     s_rate <- s_shape/abs(meanS)
-
-    #print("gamma distribution with shape parameter, alpha:")
-    #print(s_shape)
-    #print("gamma distribution with rate parameter, beta:")
-    #print(s_rate)
-    #these statements refer to the wikipedia way of describing gamma
-    #https://en.wikipedia.org/wiki/Gamma_distribution
-    #not how r categorizes them!
-
-    #print ("DFE classes in terms of Nws: ")
-    #x1 <- 1/(Nw)
-    #x10 <- 10/(Nw)
-    #x100 <- 100/(Nw)
-    #f0 <- pgamma(x1, shape=s_shape, rate=s_rate)
-    #f1 <- pgamma(x10, shape=s_shape, rate=s_rate) - f0
-    #f2 <- pgamma(x100, shape=s_shape, rate=s_rate) - f1 - f0
-    #f3 <- 1.0 - f2 - f1 - f0
+    x1 <- 1/(2*Nw)
+    x10 <- 10/(2*Nw)
+    x100 <- 100/(2*Nw)
+    f0 <- pgamma(x1, shape=s_shape, rate=s_rate)
+    f1 <- pgamma(x10, shape=s_shape, rate=s_rate) - f0
+    f2 <- pgamma(x100, shape=s_shape, rate=s_rate) - f1 - f0
+    f3 <- 1.0 - f2 - f1 - f0
     #print(paste(f0, f1, f2, f3, sep=", "))
+    #return(c(list(f0), list(f1), list(f2), list(f3)))
+    return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
+}
+grapes_raw_results_wclasses <- grapes_gammazero_raw_results %>%
+  mutate(output = map2(GammaZero.negGmean, GammaZero.negGshape, DFE_proportions_grapes)) %>%
+  unnest_wider(output) %>%
+  rename(t0 = f0) %>%  #had to rename columns bc i rerun the function
+  rename(t1 = f1) %>% 
+  rename(t2 = f2) %>% 
+  rename(t3 = f3) 
+  #rename( c(t0,t1,t2,t3) = c(f0,f1,f2,f3)) %>%
+  #mutate(output = map2(true_mean, true_shape, DFE_proportions_grapes)) %>%
+  #unnest_wider(output) 
 
-    #print ("DFE classes in terms of 2Nws: ")
+grapes_gammazero_summary <- grapes_raw_results_wclasses %>% 
+    group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd)))
+
+grapes_gammazero_simple_summary <- 
+    grapes_gammazero_summary[
+        c('DFE','selfing','t0_avg','t1_avg', 't2_avg', 't3_avg',
+            't0_sd','t1_sd', 't2_sd', 't3_sd')] %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE])) %>% 
+    mutate(output = pmap(list(true_mean, true_shape, 100), DFE_proportions_dfe_alpha)) %>%
+    unnest_wider(output) 
+
+#### TRUE DATAFRAME
+# I am making an extra df for true values to make things less confusing
+# I will Have a mean and shape column, then run program to get classes, then make into a tidy df for easy plotting
+
+dataframe_of_truth <- #must run calculate_pi.r
+summary_table %>% 
+    mutate(row_names = row.names(summary_table),
+    DFE = str_extract(row_names, "(DFE)\\d+"),
+    selfing = str_extract(row_names, "(?<=selfing)\\d+"),) %>% 
+    tibble() %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE]))
+dataframe_of_truth2 <-
+  tidy_summary_table %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE]))
+###making gamma and beta summary table for the non adaptive situation
+dataframe_of_truth3 <- dataframe_of_truth2 %>%
+  mutate(adjusted_gamma = B * true_mean) %>%
+  mutate(matchname = paste0(DFE,"output",output)) %>%
+  filter(!str_detect(fullpath, "pos")) %>%
+  group_by(DFE,selfing,matchname) %>%
+  select(c(matchname,B, empirical_Ne, DFE, selfing, true_mean, true_shape, adjusted_gamma)) 
+
+dfealpha_summary2 <- dfealpha_raw_results %>%
+  mutate(selfing = ifelse(selfing == "100", "99", selfing)) %>%
+  group_by(DFE,selfing,matchname) %>%
+  select(c(matchname,selfing,DFE,gamma,b)) 
+
+grapes_gammazero_summmary2 <- grapes_gammazero_raw_results %>%
+  group_by(DFE,selfing) %>%
+  select(c(matchname,selfing,DFE,GammaZero.negGmean, GammaZero.negGshape)) 
+
+prediction_accuracy_table <- dataframe_of_truth3 %>%
+  left_join(dfealpha_summary2) %>%
+  left_join(grapes_gammazero_summmary2) %>%
+  arrange(DFE) %>%
+  mutate (F = (as.numeric(selfing)/100)/(2-(as.numeric(selfing)/100)),
+    selfing_Ne = 5000/(1+F),
+    selfing_B = selfing_Ne / 5000,
+    F_adjusted_gamma = selfing_B * true_mean,
+    deltaNe = selfing_Ne - empirical_Ne,
+    newNE = 5000 - deltaNe,
+    newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
+
+
+
+## adding adjusted truths to plots
+# will just append to end now so I don't break things
+F_adjusted_classes <- prediction_accuracy_table %>%
+  mutate(output = map2(F_adjusted_gamma, true_shape, DFE_proportions_grapes)) %>%
+  unnest_wider(output) %>% 
+  select(DFE, selfing, f0, f1, f2, f3) %>% 
+  group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(f1 = f1_avg) %>% 
+    rename(f2 = f2_avg) %>% 
+    rename(f3 = f3_avg) 
+  
+F_adjusted_classes_tidy <- gather(F_adjusted_classes, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
+    mutate(selfing = case_when(
+        selfing == '0'  ~ 'F_adjusted_0', 
+        selfing == '50' ~ 'F_adjusted_50', 
+        selfing == '80' ~ 'F_adjusted_80', 
+        selfing == '90' ~ 'F_adjusted_90',
+        selfing == '95' ~ 'F_adjusted_95',
+        selfing == '99' ~ 'F_adjusted_99',
+        TRUE ~ selfing
+    ))
+
+DFE_proportions_truth <- function(B, meanGamma,beta) { 
+    # modified function to calc vector of dfe classes given gamma and beta
+    # assumes Nw is 100 bc grapes doesn't have two step
+    # need to confirm it has no modified Ne
+    Nw <- 100 # assuming this is what we should do? 
+    meanS <- B * (meanGamma/(2*Nw))
+
+    # this code adapted from get_dfe_class_proportions
+    s_shape <- beta
+    s_rate <- s_shape/abs(meanS)
     x1 <- 1/(2*Nw)
     x10 <- 10/(2*Nw)
     x100 <- 100/(2*Nw)
@@ -609,48 +319,120 @@ DFE_proportions_grapes <- function(meanGamma,beta) {
     return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
 }
 
-# run DFE_proportions funciton and save as new columns in df 
-grapes_gammazero_simple_summary <- grapes_gammazero_simple_summary %>%
-  mutate(output = map2(GammaZero.negGmean_avg, GammaZero.negGshape_avg, DFE_proportions_grapes)) %>%
-  unnest_wider(output) %>%
-  rename(t0 = f0) %>%  #had to rename columns bc i rerun the function
-  rename(t1 = f1) %>% 
-  rename(t2 = f2) %>% 
-  rename(t3 = f3) %>% 
-  #rename( c(t0,t1,t2,t3) = c(f0,f1,f2,f3)) %>%
-  mutate(output = map2(true_mean, true_shape, DFE_proportions_grapes)) %>%
-  unnest_wider(output) 
+dataframe_of_truth <- dataframe_of_truth %>% filter(!str_detect(row_names, "pos")) %>%
+mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+    unnest_wider(output) 
 
+dataframe_of_truth2_nopos <- dataframe_of_truth2 %>% filter(!str_detect(fullpath, "pos")) %>%
+mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+    unnest_wider(output) %>%
+    group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(f1 = f1_avg) %>% 
+    rename(f2 = f2_avg) %>% 
+    rename(f3 = f3_avg) 
+
+truth_tidy <- gather(dataframe_of_truth2_nopos, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
+    mutate(selfing = case_when(
+        selfing == '0'  ~ 'true0_recalc', 
+        selfing == '50' ~ 'true50', 
+        selfing == '80' ~ 'true80', 
+        selfing == '90' ~ 'true90',
+        selfing == '95' ~ 'true95',
+        selfing == '99' ~ 'true99',
+        TRUE ~ selfing
+    ))
+
+grapes_gammazero_simple_summary <- grapes_gammazero_simple_summary %>%
+    rename(
+        'z0' = f0,
+        'z1'= f1 ,
+        'z2'= f2 ,
+        'z3'= f3 ,
+       'f0' = t0_avg , 
+       'f1' = t1_avg , 
+       'f2' = t2_avg , 
+        'f3' = t3_avg ,
+        'f0_sd'= t0_sd , 
+        'f1_sd'= t1_sd , 
+        'f2_sd'= t2_sd , 
+        'f3_sd' = t3_sd ) 
 # convert the data frame to a tidy format
 df_tidy <- gather(grapes_gammazero_simple_summary, 
-    key = "generation", value = "value", c(t0:t3)) %>%
-    mutate(generation = recode(generation,
-    t0 = 'f0', 
-    t1 = 'f1', 
-    t2 = 'f2', 
-    t3 = 'f3')) 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) 
+    #mutate(generation = recode(generation,
+    #t0_avg = 'f0', 
+    #t1_avg = 'f1', 
+    #t2_avg = 'f2', 
+    #t3_avg = 'f3')) 
 
 df_true_tidy <- gather(grapes_gammazero_simple_summary, 
-    key = "generation", value = "value", c(f0:f3)) %>%
+    key = "generation", value = "value", c(z0:z3)) %>%
+    mutate(generation = recode(generation,
+        z0 = 'f0', 
+        z1 = 'f1', 
+        z2 = 'f2', 
+        z3 = 'f3'
+    ))  %>% 
     select(1,13:14) %>% distinct() %>%
     mutate(selfing = "True0")
 
-# create a bar plot with separate panels for each DFE
-ggplot(bind_rows(df_true_tidy,df_tidy) , aes(x = generation, y = value, fill = selfing)) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  facet_wrap(~ DFE, nrow = 2) +
-  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") 
+#grapes_for_plotting <- bind_rows(df_tidy, df_true_tidy) %>% 
+#  mutate(generation = recode(generation,
+#    t0_avg = 'f0', 
+#    t1_avg = 'f1', 
+#    t2_avg = 'f2', 
+#    t3_avg = 'f3',
+#    t0_sd = 'f0_sd', 
+#    t1_sd = 'f1_sd', 
+#    t2_sd = 'f2_sd', 
+#    t3_sd = 'f3_sd')) %>% 
+#    melt() %>%
+#    filter(variable == "value" | paste0(generation, "_sd") == variable)
 
+#grapes_for_plotting$variable <- ifelse(grepl("_sd", 
+#    grapes_for_plotting$generation), "sd", "value")  
+
+grapes_for_plotting <- bind_rows(df_true_tidy,df_tidy) %>%
+    select(1:8) %>%
+    melt() %>% 
+    mutate(value = ifelse(is.na(value), 0, value)) %>% 
+    #mutate(generation = recode(generation,
+    #  t0_avg = 'f0', 
+    #  t1_avg = 'f1', 
+    #  t2_avg = 'f2', 
+    #  t3_avg = 'f3',
+    #  t0_sd = 'f0_sd', 
+    #  t1_sd = 'f1_sd', 
+    #  t2_sd = 'f2_sd', 
+    #  t3_sd = 'f3_sd')) %>% 
+    filter(variable == "value" | paste0(generation, "_sd") == variable)
+
+grapes_for_plotting$variable <- ifelse(grepl("_sd", grapes_for_plotting$variable), "sd", "value")  
+
+
+voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")  
+#dplyr::group_by(generation, DFE, selfing, variable) %>%
+#    dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+#    dplyr::filter(n > 1L)
+# create a bar plot with separate panels for each DFE
+#ggplot(bind_rows(df_true_tidy,df_tidy) , aes(x = generation, y = value, fill = selfing)) +
+#  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+#  facet_wrap(~ DFE, nrow = 2) +
+#  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") 
+#
 
 # Define the order of the selfing levels
-selfing_order <- c("True0", 0, 50, 80, 90, 95, 99)
-
-# Create the grouped bar chart with custom selfing order
-ggplot(bind_rows(df_true_tidy,df_tidy), aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "90", "95", "99")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  facet_wrap(~ DFE, nrow = 2) +
-  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
-  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
+#selfing_order <- c("True0", 0, 50, 80, 90, 95, 99)
+#
+## Create the grouped bar chart with custom selfing order
+#ggplot(bind_rows(df_true_tidy,df_tidy), aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "90", "95", "99")))) +
+#  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+#  facet_wrap(~ DFE, nrow = 2) +
+#  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+#  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
 
   
 dfealpha_for_plotting <- bind_rows(df_true_tidy,dfealpha_tidy) %>%
@@ -666,6 +448,7 @@ dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$vari
 
 voodoo <- pivot_wider(dfealpha_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")
 # Define the order of the selfing levels
+#selfing_order <- c("True0", 0, 50, 80, 90, 95, 100)
 selfing_order <- c("True0", 0, 50, 80, 90, 95, 100)
 
 # Create the grouped bar chart with custom selfing order
@@ -674,15 +457,1015 @@ ggplot(voodoo, aes(x = generation, y = value, fill = factor(selfing, levels = c(
   facet_wrap(~ DFE, nrow = 2) +
   labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
-  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
+  #scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green")) +
+  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green")) +
+  expand_limits(y=c(0,1))
 #now I take the average, getting avg and sd for my classes
 #I could also probably just ggplot but I think we will always 
 #be using the averages for now
 
-# create example data
-df <- data.frame(generation = rep(c("f0", "f1", "f2", "f3"), each = 5),
-                 variable = rep(c("value", "f0_sd", "f1_sd", "f2_sd", "f3_sd"), times = 4))
+
+#grapes plot
+selfing_order <- c("True0", 0, 50, 80, 90, 95, 99)
+
+# Create the grouped bar chart with custom selfing order
+ggplot(voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "90", "95", "99")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 2) +
+  labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green")) +
+  expand_limits(y=c(0,1))
+  
+
+voodoo$name <- "DFEalpha"
+voodoo_grapes$name <- "Grapes"
+
+######stuff below here is using new truth
+#### DFE ALPHA ONLY
+dfealpha_for_plotting <- bind_rows(df_true_tidy,dfealpha_tidy,F_adjusted_classes_tidy,truth_tidy) %>%
+    select(1:4,32,34,36,38) %>%
+    melt() %>% 
+    mutate(value = ifelse(is.na(value), 0, value)) %>% 
+    filter(variable == "value" | paste0(generation, "_sd") == variable)
+    
+dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$variable), "sd", "value")  
+
+voodoo <- pivot_wider(dfealpha_for_plotting, 
+  id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value") %>%
+mutate(selfing = case_when(
+        selfing == 'True0'  ~ 'truth', 
+        selfing == 'true0_recalc' ~ 'true0',
+        selfing == '100' ~ '99',
+        TRUE ~ selfing 
+))
+# Define the order of the selfing levels
+#selfing_order <- c("True0", 0, 50, 80, 90, 95, 100)
+#selfing_order <- c("True0", "true0_recalc", 0, "true50", 50, "true80", 80, "true90", 90, "true95", 95, "true99", 100)
+
+#removing adjusted truths for rainbow plots for now
+dfealpha_rainbow_plot <- voodoo %>% 
+  filter(!grepl("F_adjusted|true", selfing))
+selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+
+ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = selfing_order))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 2) +
+  labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) + 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+#voodoo2 <- voodoo %>% mutate(selfing = case_when(
+#        selfing == 'True0'  ~ 'truth', 
+#        selfing == 'true0_recalc' ~ 'true0',
+#        selfing == '100' ~ '99',
+#        TRUE ~ selfing 
+#))
+#
+
+# Split data frame into "truth" and "non-truth" data frames
+voodoo2_truth <- voodoo %>% filter(grepl("truth", selfing))
+voodoo2_not_truth <- voodoo %>% filter(!grepl("truth", selfing))
+
+# Replicate "truth" data frame
+df_truth_rep <- voodoo2_truth %>% slice(rep(1:n(), each = 6))
+
+# Assign selfing class to replicated "truth" data frame
+df_truth_rep_self <- df_truth_rep %>%
+  mutate(
+    replicate = rep(1:6, length.out = n()),
+    selfing_class = case_when(
+      replicate == 1 ~ "0% Selfing",
+      replicate == 2 ~ "50% Selfing",
+      replicate == 3 ~ "80% Selfing",
+      replicate == 4 ~ "90% Selfing",
+      replicate == 5 ~ "95% Selfing",
+      replicate == 6 ~ "99% Selfing",
+      TRUE ~ "error"
+    )
+  )
+
+selfing_nums <- c(0, 50, 80, 90, 95, 99)
+voodoo3 <- voodoo2_not_truth %>%
+mutate(
+    selfing_class = case_when(
+      selfing == paste0("true", selfing_nums[1]) ~ "0% Selfing",
+      selfing == "0" ~ "0% Selfing",
+      selfing == "F_adjusted_0" ~ "0% Selfing",
+      selfing == paste0("true", selfing_nums[2]) ~ "50% Selfing",
+      selfing == "50" ~ "50% Selfing",
+      selfing == "F_adjusted_50" ~ "50% Selfing",
+      selfing == paste0("true", selfing_nums[3]) ~ "80% Selfing",
+      selfing == "80" ~ "80% Selfing",
+      selfing == "F_adjusted_80" ~ "80% Selfing",
+      selfing == paste0("true", selfing_nums[4]) ~ "90% Selfing",
+      selfing == "90" ~ "90% Selfing",
+      selfing == "F_adjusted_90" ~ "90% Selfing",
+      selfing == paste0("true", selfing_nums[5]) ~ "95% Selfing",
+      selfing == "95" ~ "95% Selfing",
+      selfing == "F_adjusted_95" ~ "95% Selfing",
+      selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
+      selfing == "99" ~ "99% Selfing",
+      selfing == "F_adjusted_99" ~ "99% Selfing",
+      TRUE ~ "truth"
+    )
+  )
+
+voodoo3 <- bind_rows(df_truth_rep_self, voodoo3)
+simulated_truth <- voodoo3 %>%
+  filter(grepl("true|F_adjusted", selfing))
+
+selfing_order <- c("truth", "F_adjusted_0", "true0", "0", "F_adjusted_50","true50", "50", "F_adjusted_80","true80", "80", "F_adjusted_90","true90", "90", "F_adjusted_95","true95", "95", "F_adjusted_99","true99", "99")
+
+ggplot(voodoo3, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = selfing_order))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D"),6)))+ 
+  theme(legend.position="none")
+
+### grapes
+  grapes_for_plotting <- bind_rows(df_true_tidy,df_tidy,F_adjusted_classes_tidy, truth_tidy) %>%
+    select(1:8) %>%
+    melt() %>% 
+    mutate(value = ifelse(is.na(value), 0, value)) %>% 
+    filter(variable == "value" | paste0(generation, "_sd") == variable)
+
+grapes_for_plotting$variable <- ifelse(grepl("_sd", grapes_for_plotting$variable), "sd", "value")  
+
+
+voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")  %>%
+    mutate(selfing = case_when(
+        selfing == "True0" ~ "truth",
+        selfing == "true0_recalc" ~ "true0",
+        TRUE ~ selfing
+    ))
+#test plot with all the truth
+#selfing_order <- c("truth", "F_adjusted_0","true0", 0, "F_adjusted_50","true50", 50, "F_adjusted_80","true80", 80, "F_adjusted_90","true90", 90, "F_adjusted_95","true95", 95, "F_adjusted_99","true99", 99)
+
+#now we are removing all the rainbows from the plots, so this code removes the adjusted truths 
+#also cleaning up names for better legend
+grapes_rainbow_plot <- voodoo_grapes %>%
+  filter(!grepl("F_adjusted|true", selfing))
+selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+
+# Create the grouped bar chart with custom selfing order
+ggplot(grapes_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = selfing_order))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 2) +
+  labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) + 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+
+voodoo_grapes2 <- voodoo_grapes %>%
+    mutate(selfing = case_when(
+        selfing == 0~ "0_grapes",
+        selfing == 50 ~ "50_grapes",
+        selfing == 80 ~ "80_grapes",
+        selfing == 90 ~ "90_grapes",
+        selfing == 95 ~ "95_grapes",
+        selfing == 99 ~ "99_grapes"
+    )) %>%
+    na.omit()
+
+
+selfing_nums <- c(0, 50, 80, 90, 95, 99)
+voodoo3_grapes <- voodoo_grapes2 %>%
+mutate(
+    selfing_class = case_when(
+      selfing == "0_grapes" ~ "0% Selfing",
+      selfing == "50_grapes" ~ "50% Selfing",
+      selfing == "80_grapes" ~ "80% Selfing",
+      selfing == "90_grapes" ~ "90% Selfing",
+      selfing == "95_grapes" ~ "95% Selfing",
+      selfing == "99_grapes" ~ "99% Selfing",
+    )
+  )
+
+just_grapes_plot <- bind_rows(df_truth_rep_self, voodoo3_grapes, simulated_truth)
+
+#grapes only plot:
+ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "F_adjusted_0", "true0", "0_grapes", "F_adjusted_50", "true50", "50_grapes", "F_adjusted_80", "true80", "80_grapes", "F_adjusted_90", "true90", "90_grapes", "F_adjusted_95", "true95", "95_grapes", "F_adjusted_99", "true99", "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "purple"),6)))+ 
+  theme(legend.position="none")
+
+
+# combo dfealpha and grapes plot:
+ggplot(bind_rows(voodoo3,voodoo3_grapes), aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
+        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
+        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
+        "F_adjusted_99", "true99", 99, "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
+  theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
+##################################################
+#Analyzing grapes GammaExpo results
+
+
+grapes_dir <- "/nas/longleaf/home/adaigle/DFESelfing/grapes/"
+pos_output_dirs <- paste(grapes_dir, dir(grapes_dir, pattern = "output_pos"), "/all", sep = "")
+
+#table of results with columns signifying selfing%, DFE, and output
+pos_grapes_raw_results <- tibble(
+    name = list.files(path = pos_output_dirs, pattern = ".csv$"),
+    matchname = sub(".txt.csv","",name), #will be useful for comparing results later, or combining with other programs
+    DFE = str_extract(matchname, "(DFE)\\d+"),
+    fullpath = paste(pos_output_dirs, "/", name,sep=""),
+    selfing = str_extract(fullpath, "(?<=grapes_output_pos_)\\d+"),
+    data = lapply(fullpath,read.csv)
+)
+
+#now I want to clean this up because it has too much going on
+# I will keep just the gammazero row in each DF
+pos_grapes_gammaexpo_raw_results <- pos_grapes_raw_results %>% 
+    mutate(data = map(data, ~ { #start of a mapping funciton, which is applied to each df in column
+    df_filtered <- .x %>% filter(model == 'GammaExpo') %>% #select only GammaZero row
+    select(1:52) %>%# removing prediction columns for now
+    select_if(~ all(!is.na(.))) # remove NA columns
+    return(df_filtered)
+}))
+
+#now i summarize the outputs by averaging them and finding the standard deviation
+#first I turn my table of dataframes into a dataframe, because my df's only had one row 
+# Extract the column of data frames and bind them into a single data frame
+df <- pos_grapes_gammaexpo_raw_results$data %>% bind_rows() %>% mutate(row_number = row_number())
+
+pos_grapes_gammaexpo_raw_results <- pos_grapes_gammaexpo_raw_results  %>% 
+    mutate(row_number = row_number()) %>% 
+    left_join(df, by = "row_number") %>% 
+    select(-data, -row_number) %>%
+    as.data.frame
+
+pos_grapes_gammaexpo_raw_results_wtruth <- pos_grapes_gammaexpo_raw_results %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE]))
+
+pos_grapes_gammaexpo_raw_results_wclasses <- pos_grapes_gammaexpo_raw_results %>%
+  mutate(output = map2(GammaExpo.negGmean, GammaExpo.negGshape, DFE_proportions_grapes)) %>%
+  unnest_wider(output) %>%
+  rename(t0 = f0) %>%  #had to rename columns bc i rerun the function
+  rename(t1 = f1) %>% 
+  rename(t2 = f2) %>% 
+  rename(t3 = f3) %>% group_by(selfing,DFE)
+  #rename( c(t0,t1,t2,t3) = c(f0,f1,f2,f3)) %>%
+  #mutate(output = map2(true_mean, true_shape, DFE_proportions_grapes)) %>%
+  #unnest_wider(output) 
+
+alphas <- read.table( file = "/nas/longleaf/home/adaigle/DFESelfing/alpha_list.txt", header = TRUE)
+#rename selfing levels to be compatable with graph
+alphas <- alphas %>% mutate(selfing=recode(selfing, "0" = 'true_alpha_0',
+       '50' ='true_alpha_50', 
+        '80' = 'true_alpha_80', 
+        '90' = 'true_alpha_90',
+        '95' = 'true_alpha_95',
+        '99' = 'true_alpha_99'
+    ))%>% group_by(selfing, DFE)
+
+pos_grapes_gammaexpo_raw_results_wclasses2<-rbind(pos_grapes_gammaexpo_raw_results_wclasses, alphas)
+
+
+grapes_gammaexpo_summary <- pos_grapes_gammaexpo_raw_results_wclasses2 %>% 
+group_by(selfing, DFE) %>%
+summarize(across(where(is.numeric), list(avg = mean, sd = sd)))
 
 
 
-  paste0()
+grapes_gammaexpo_simple_summary <- 
+    grapes_gammaexpo_summary[
+        c('DFE','selfing','t0_avg','t1_avg', 't2_avg', 't3_avg',
+            't0_sd','t1_sd', 't2_sd', 't3_sd')] %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE])) %>% 
+    mutate(output = pmap(list(true_mean, true_shape, 100), DFE_proportions_dfe_alpha)) %>% #modified so I assume gamma = 2Nes
+    unnest_wider(output) %>%
+    rename(
+        'z0' = f0,
+        'z1'= f1 ,
+        'z2'= f2 ,
+        'z3'= f3 ,
+        'f0' = t0_avg , 
+        'f1' = t1_avg , 
+        'f2' = t2_avg , 
+        'f3' = t3_avg ,
+        'f0_sd'= t0_sd , 
+        'f1_sd'= t1_sd , 
+        'f2_sd'= t2_sd , 
+        'f3_sd' = t3_sd)
+# convert the data frame to a tidy format
+posgrapes_df_tidy <- gather(grapes_gammaexpo_simple_summary, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) 
+    #mutate(generation = recode(generation,
+    #t0_avg = 'f0', 
+    #t1_avg = 'f1', 
+    #t2_avg = 'f2', 
+    #t3_avg = 'f3')) 
+
+posgrapes_df_true_tidy <- gather(grapes_gammaexpo_simple_summary, 
+    key = "generation", value = "value", c(z0:z3)) %>%
+    mutate(generation = recode(generation,
+        z0 = 'f0', 
+        z1 = 'f1', 
+        z2 = 'f2', 
+        z3 = 'f3'
+    ))  %>% 
+    select(1,13:14) %>% distinct() %>%
+    mutate(selfing = "True0")
+
+pos_dataframe_of_truth <- #must run calculate_pi.r
+pos_summary_table %>% 
+    mutate(row_names = row.names(pos_summary_table),
+    DFE = str_extract(row_names, "(DFE)\\d+"),
+    selfing = str_extract(row_names, "(?<=selfing)\\d+"),) %>% 
+    tibble() %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE]))
+
+pos_dataframe_of_truth <- pos_dataframe_of_truth %>% 
+mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+    unnest_wider(output) 
+
+##new tidy version with multiple replicates. Can remove other two versions above if this is working out
+dataframe_of_truth2_pos <- dataframe_of_truth2 %>% filter(str_detect(fullpath, "pos")) %>%
+mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+    unnest_wider(output) %>%
+    group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(f1 = f1_avg) %>% 
+    rename(f2 = f2_avg) %>% 
+    rename(f3 = f3_avg) 
+
+pos_truth_tidy <- gather(dataframe_of_truth2_pos, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
+    mutate(selfing = case_when(
+        selfing == '0'  ~ 'true0_recalc', 
+        selfing == '50' ~ 'true50', 
+        selfing == '80' ~ 'true80', 
+        selfing == '90' ~ 'true90',
+        selfing == '95' ~ 'true95',
+        selfing == '99' ~ 'true99',
+        TRUE ~ selfing
+    ))
+
+pos_grapes_for_plotting <- bind_rows(posgrapes_df_tidy,posgrapes_df_true_tidy,pos_truth_tidy) %>%
+    select(1:6,13:14) %>%
+    melt() %>% 
+    mutate(value = ifelse(is.na(value), 0, value)) %>% 
+    filter(variable == "value" | paste0(generation, "_sd") == variable)
+
+pos_grapes_for_plotting$variable <- ifelse(grepl("_sd", pos_grapes_for_plotting$variable), "sd", "value")  
+
+pos_voodoo_grapes <- pivot_wider(pos_grapes_for_plotting, id_cols = c("generation","DFE","selfing"), 
+    names_from = "variable", values_from = "value") 
+pos_voodoo_grapes <- pos_voodoo_grapes %>% 
+    mutate(selfing = case_when(
+        selfing == "True0" ~ "truth",
+        selfing == "true0_recalc" ~ "true0",
+        selfing == 0~ "0_grapes",
+        selfing == 50 ~ "50_grapes",
+        selfing == 80 ~ "80_grapes",
+        selfing == 90 ~ "90_grapes",
+        selfing == 95 ~ "95_grapes",
+        selfing == 99 ~ "99_grapes",
+        TRUE ~ selfing
+    ))
+pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(selfing %in% c('true90', 'true80', 'true95'))) #leaving filtering for last so that I can toggle what I want in the chart
+#pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(DFE %in% c('DFE3'))) # was used before DFE2 run was complete
+selfing_order <- c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")
+
+# Create the grouped bar chart with custom selfing order
+ggplot(pos_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, levels = c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 2) +
+  labs(title = "Grapes positive selection deleterious DFEs", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1))
+
+############# summary tables
+#write.csv(dfealpha_summary, file = "/nas/longleaf/home/adaigle/DFESelfing/dfealpha_summary.csv")
+#dfealpha_summary_simple <- select(dfealpha_summary, DFE, b_avg, Es_avg, N1_avg, N2_avg, t2_avg) %>%
+#    rename_at(vars(ends_with("_avg")), ~ str_remove(.x, "_avg")) %>%
+#    arrange(DFE) %>% rename(s = Es, beta = b, Selfing_rate = selfing)
+#write.csv(dfealpha_summary_simple, row.names = FALSE,
+#    file = "/nas/longleaf/home/adaigle/DFESelfing/dfealpha_summary_simple.csv")
+#
+#write.csv(grapes_gammaexpo_summary, file = "/nas/longleaf/home/adaigle/DFESelfing/grapes_gammaexpo_summary.csv")
+#write.csv(grapes_gammazero_summary, file = "/nas/longleaf/home/adaigle/DFESelfing/grapes_gammazero_summary.csv")
+#combination plot
+#ggplot(pos_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, 
+#    levels = c("truth", "true0", 0, "0_grapes",
+#        "true50", 50, "50_grapes", "true80", 80, "80_grapes",
+#        "true90", 90, "90_grapes", "true95", 95, "95_grapes",
+#        "true99", 99, "99_grapes")))) +
+#  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+#  labs(title = "Grapes positive selection deleterious DFEs", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+#  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+#  expand_limits(y=c(0,1)) +
+#  facet_grid(rows = vars(DFE), cols = vars(case_when(
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 0 ~ "0% Selfing",
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 50 ~ "50% Selfing",
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 80 ~ "80% Selfing",
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 90 ~ "90% Selfing",
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 95 ~ "95% Selfing",
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 99 ~ "99% Selfing",
+#    TRUE ~ "uncorrected truth"
+#  )))
+
+pos_voodoo_grapes2_truth <- pos_voodoo_grapes %>% filter(grepl("truth", selfing))
+pos_voodoo_grapes2_not_truth <- pos_voodoo_grapes %>% filter(!grepl("truth", selfing))
+
+# Replicate "truth" data frame
+df_truth_rep <- pos_voodoo_grapes2_truth %>% slice(rep(1:n(), each = 6))
+
+# Assign selfing class to replicated "truth" data frame
+df_truth_rep_self <- df_truth_rep %>%
+  mutate(
+    replicate = rep(1:6, length.out = n()),
+    selfing_class = case_when(
+      replicate == 1 ~ "0% Selfing",
+      replicate == 2 ~ "50% Selfing",
+      replicate == 3 ~ "80% Selfing",
+      replicate == 4 ~ "90% Selfing",
+      replicate == 5 ~ "95% Selfing",
+      replicate == 6 ~ "99% Selfing",
+      TRUE ~ "error"
+    )
+  ) %>%
+  filter(!(replicate %in% c(3, 4, 5))) %>% #leaving this here in case we add more selfing levels
+  select(-replicate)
+  
+
+
+pos_voodoo_grapes2 <- pos_voodoo_grapes2_not_truth %>%
+mutate(
+    selfing_class = case_when(
+      selfing == "0_grapes" ~ "0% Selfing",
+      selfing == "50_grapes" ~ "50% Selfing",
+      #selfing == "80_grapes" ~ "80% Selfing",
+      #selfing == "90_grapes" ~ "90% Selfing",
+      #selfing == "95_grapes" ~ "95% Selfing",
+      selfing == "99_grapes" ~ "99% Selfing",
+      selfing == paste0("true", selfing_nums[1]) ~ "0% Selfing",
+      selfing == paste0("true", selfing_nums[2]) ~ "50% Selfing",
+      #selfing == paste0("true", selfing_nums[3]) ~ "80% Selfing",
+      #selfing == paste0("true", selfing_nums[4]) ~ "90% Selfing",
+      #selfing == paste0("true", selfing_nums[5]) ~ "95% Selfing",
+      selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
+    )
+  ) 
+
+
+#plot gammaexpo results
+ggplot(rbind(pos_voodoo_grapes2, df_truth_rep_self), aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "true0", "0_grapes", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "Grapes (with beneficial mutations)", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF"),6))) + 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+
+#### plotting adv muts using grapes_gammaexpo_summary
+# dividing mean by 2? I am assuming it is parameterized by 4Nes and I want it to match our 2NeS
+ggplot(grapes_gammaexpo_summary, aes(x = DFE, y = GammaExpo.posGmean_avg/2, fill = selfing)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = GammaExpo.posGmean_avg/2 - GammaExpo.posGmean_sd/2,
+                    ymax = GammaExpo.posGmean_avg/2 + GammaExpo.posGmean_sd/2),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  labs(x = "DFE", y = "GammaExpo.posGmean_avg")
+
+ggplot(grapes_gammaexpo_summary, aes(x = DFE, y = GammaExpo.pos_prop_avg, fill = selfing)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = GammaExpo.pos_prop_avg - GammaExpo.pos_prop_sd,
+                    ymax = GammaExpo.pos_prop_avg + GammaExpo.pos_prop_sd),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  labs(x = "DFE", y = "GammaExpo.pos_prop_avg")
+
+#alpha estimates gamma
+alphaplot <- grapes_gammaexpo_summary %>% 
+    mutate(selfing = case_when(
+        selfing == 'true_alpha_0'  ~ 'True alpha, 0% Selfing', 
+        selfing == 'true_alpha_50' ~ 'True alpha, 50% Selfing', 
+        selfing == 'true_alpha_99' ~ 'True alpha, 99% Selfing',
+        selfing == '0' ~ 'Estimated alpha, 0% Selfing', 
+        selfing == '50' ~ 'Estimated alpha, 50% Selfing', 
+        selfing == '99' ~ 'Estimated alpha, 99% Selfing', 
+        TRUE ~ selfing
+    ))
+
+alpha_order <- c('True alpha, 0% Selfing', 'Estimated alpha, 0% Selfing', 
+  'True alpha, 50% Selfing', 'Estimated alpha, 50% Selfing', 
+  'True alpha, 99% Selfing', 'Estimated alpha, 99% Selfing')
+ggplot(alphaplot, aes(x = DFE, y = alpha_avg, fill = factor(selfing, alpha_order))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = alpha_avg - alpha_sd,
+                    ymax = alpha_avg + alpha_sd),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  labs(title = "Grapes GammaExpo model, alpha prediction", x = "DFE", y = "alpha", fill = "") + 
+  theme(axis.text.x = element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
+
+  #############
+  #plots for Galtier
+#noselfingplot <- rbind(
+#        filter(bind_rows(voodoo2, voodoo_grapes2), selfing == 'true0'),
+#        filter(bind_rows(voodoo2, voodoo_grapes2), selfing == '0_grapes')
+#        ) %>%
+#    mutate(selfing = recode(selfing,
+#        'true0' = 'True DFE',
+#        '0_grapes' = 'Grapes estimated DFE'
+#    ))
+#
+#ggplot(noselfingplot, aes(x = generation, y = value, fill = factor(selfing, 
+#    levels = c("True DFE", 'Grapes estimated DFE')))) +
+#  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+#  labs(title = "Grapes estimation vs truth value (Using gamma = NeS)", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+#  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+#  expand_limits(y=c(0,1)) +
+#  facet_grid(rows = vars(case_when(
+#    as.numeric(gsub("[^0-9]", "", as.character(selfing))) <= 0 ~ "",
+#  )), cols = vars(DFE))
+
+
+###making gamma and beta summary table for the non adaptive situation
+dataframe_of_truth3 <- dataframe_of_truth2 %>%
+  mutate(adjusted_gamma = B * true_mean) %>%
+  mutate(matchname = paste0(DFE,"output",output)) %>%
+  filter(!str_detect(fullpath, "pos")) %>%
+  group_by(DFE,selfing,matchname) %>%
+  select(c(matchname,B, empirical_Ne, DFE, selfing, true_mean, true_shape, adjusted_gamma)) 
+
+dfealpha_summary2 <- dfealpha_raw_results %>%
+  mutate(selfing = ifelse(selfing == "100", "99", selfing)) %>%
+  group_by(DFE,selfing,matchname) %>%
+  select(c(matchname,selfing,DFE,gamma,b)) 
+
+grapes_gammazero_summmary2 <- grapes_gammazero_raw_results %>%
+  group_by(DFE,selfing) %>%
+  select(c(matchname,selfing,DFE,GammaZero.negGmean, GammaZero.negGshape)) 
+
+prediction_accuracy_table <- dataframe_of_truth3 %>%
+  left_join(dfealpha_summary2) %>%
+  left_join(grapes_gammazero_summmary2) %>%
+  arrange(DFE) %>%
+  mutate (F = (as.numeric(selfing)/100)/(2-(as.numeric(selfing)/100)),
+    selfing_Ne = 5000/(1+F),
+    selfing_B = selfing_Ne / 5000,
+    F_adjusted_gamma = selfing_B * true_mean,
+    deltaNe = selfing_Ne - empirical_Ne,
+    newNE = 5000 - deltaNe,
+    newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
+
+
+
+## adding adjusted truths to plots
+# will just append to end now so I don't break things
+F_adjusted_classes <- prediction_accuracy_table %>%
+  mutate(output = map2(F_adjusted_gamma, true_shape, DFE_proportions_grapes)) %>%
+  unnest_wider(output) %>% 
+  select(DFE, selfing, f0, f1, f2, f3) %>% 
+  group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(f1 = f1_avg) %>% 
+    rename(f2 = f2_avg) %>% 
+    rename(f3 = f3_avg) 
+  
+F_adjusted_classes_tidy <- gather(F_adjusted_classes, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
+    mutate(selfing = case_when(
+        selfing == '0'  ~ 'F_adjusted_0', 
+        selfing == '50' ~ 'F_adjusted_50', 
+        selfing == '80' ~ 'F_adjusted_80', 
+        selfing == '90' ~ 'F_adjusted_90',
+        selfing == '95' ~ 'F_adjusted_95',
+        selfing == '99' ~ 'F_adjusted_99',
+        TRUE ~ selfing
+    ))
+
+
+
+
+
+
+
+
+
+prediction_accuracy_table_gamma_melt <- prediction_accuracy_table %>% 
+  summarize(across(c(true_mean,adjusted_gamma,F_adjusted_gamma, gamma, GammaZero.negGmean), list(avg = mean, sd = sd))) %>%
+  rename("true gamma_avg" = true_mean_avg,
+    "BGS-adjusted gamma_avg" = adjusted_gamma_avg,
+    "F-adjusted gamma_avg" = F_adjusted_gamma_avg,
+    "DFEalpha gamma_avg" = gamma_avg,
+    "Grapes gamma_avg" = GammaZero.negGmean_avg,
+    "true gamma_sd" = true_mean_sd,
+    "BGS-adjusted gamma_sd" = adjusted_gamma_sd,
+    "F-adjusted gamma_sd" = F_adjusted_gamma_sd,
+    "DFEalpha gamma_sd" = gamma_sd,
+    "Grapes gamma_sd" = GammaZero.negGmean_sd) %>% 
+  pivot_longer(
+    cols = c(3:12), 
+    names_to = c(".value", "variable"), 
+    names_sep = "_", 
+    values_drop_na = TRUE
+  ) %>%
+
+  melt(variable.name = "gamma_method", id.vars = c("DFE", "selfing", "variable")) %>%
+    pivot_wider(id_cols = c("DFE", "selfing", "gamma_method"), 
+                        names_from = "variable", 
+                        values_from = "value")
+
+#making selfing class column to make graph labels prettier
+gammaorder <- c("true gamma", "F-adjusted gamma", "BGS-adjusted gamma", "DFEalpha gamma", "Grapes gamma")
+
+prediction_accuracy_table_gamma_melt <- prediction_accuracy_table_gamma_melt %>%
+mutate(
+    selfing_class = case_when(
+      selfing == "0" ~ "0% Selfing",
+      selfing == "50" ~ "50% Selfing",
+      selfing == "80" ~ "80% Selfing",
+      selfing == "90" ~ "90% Selfing",
+      selfing == "95" ~ "95% Selfing",
+      selfing == "99" ~ "99% Selfing"
+    )
+  ) %>%
+  arrange(factor(gamma_method, levels = gammaorder))
+
+#colorblind palete?
+cbPalette <- c("grey", "#E69F00", "#56B4E9", "#009E73", "#F0E442")
+ggplot(prediction_accuracy_table_gamma_melt, aes(x = factor(gamma_method, levels = gammaorder), y = avg, fill = factor(gamma_method, levels = gammaorder))) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class), scales = "free_y") +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  #stat_summary(fun.data = "mean_sdl", geom = "bar", position = "dodge") +
+  geom_errorbar(aes(ymin = avg-sd, ymax = avg+sd), position = position_dodge(width = 0.9), width = 0.2) +
+  labs(x = "Gamma estimation method", y = "Gamma", fill = "Gamma estimation method", title = "Gamma estimation accuracy") + 
+  scale_fill_manual(values=c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x = element_blank(), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
+
+ggplot(bind_rows(voodoo3,voodoo3_grapes), aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
+        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
+        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
+        "F_adjusted_99", "true99", 99, "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6)))+ 
+  theme(legend.position="none")
+#beta stuff
+prediction_accuracy_table_beta_melt <- prediction_accuracy_table %>% 
+  summarize(across(c(true_shape, b, GammaZero.negGshape), list(avg = mean, sd = sd))) %>%
+  rename("true shape_avg" = true_shape_avg,
+    "DFEalpha beta_avg" = b_avg,
+    "Grapes beta_avg" = GammaZero.negGshape_avg,
+    "true shape_sd" = true_shape_sd,
+    "DFEalpha beta_sd" = b_sd,
+    "Grapes beta_sd" = GammaZero.negGshape_sd) %>%
+  pivot_longer(
+    cols = c(3:8), 
+    names_to = c(".value", "variable"), 
+    names_sep = "_", 
+    values_drop_na = TRUE
+  ) %>%
+   melt(variable.name = "gamma_method", id.vars = c("DFE", "selfing", "variable")) %>%
+    pivot_wider(id_cols = c("DFE", "selfing", "gamma_method"), 
+                        names_from = "variable", 
+                        values_from = "value")
+
+ggplot(prediction_accuracy_table_beta_melt, aes(x = gamma_method, y = avg, fill = gamma_method)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing), scales = "free_y") +
+  stat_summary(fun.data = "mean_sdl", geom = "bar", position = "dodge") +
+  #geom_errorbar(aes(ymin = avg-sd, ymax = avg+sd), position = position_dodge(width = 0.9), width = 0.2) +
+  labs(x = "Method", y = "Beta", fill = "")
+
+prediction_accuracy_table
+
+#t_tests <- prediction_accuracy_table %>% group_by(DFE,selfing) %>%
+#  summarize(dfealpha_v_true = list(t.test(gamma, true_mean, paired = TRUE)),
+#    grapes_v_true = list(t.test(GammaZero.negGmean, true_mean, paired = TRUE)),
+#    dfealpha_v_adjustedgamma = list(t.test(gamma, adjusted_gamma, paired = TRUE)),
+#    grapes_v_adjustedgamma = list(t.test(GammaZero.negGmean, adjusted_gamma, paired = TRUE)),
+#    dfealpha_v_Fgamma = list(t.test(gamma, F_adjusted_gamma, paired = TRUE)),
+#    grapes_v_Fgamma = list(t.test(GammaZero.negGmean, F_adjusted_gamma, paired = TRUE)),
+#    dfealpha_newNegamma = list(t.test(gamma, newNegamma, paired = TRUE)),
+#    grapes_v_newNegamma = list(t.test(GammaZero.negGmean, newNegamma, paired = TRUE))
+#  )
+#t_tests_pval <- prediction_accuracy_table %>% 
+#  group_by(DFE,selfing) %>%
+#  summarize(dfealpha_v_true = t.test(gamma, true_mean, paired = TRUE)$p.value,
+#            grapes_v_true = t.test(GammaZero.negGmean, true_mean, paired = TRUE)$p.value,
+#            dfealpha_v_adjustedgamma = t.test(gamma, adjusted_gamma, paired = TRUE)$p.value,
+#            grapes_v_adjustedgamma = t.test(GammaZero.negGmean, adjusted_gamma, paired = TRUE)$p.value,
+#            dfealpha_v_Fgamma = t.test(gamma, F_adjusted_gamma, paired = TRUE)$p.value,
+#            grapes_v_Fgamma = t.test(GammaZero.negGmean, F_adjusted_gamma, paired = TRUE)$p.value,
+#            dfealpha_newNegamma = t.test(gamma, newNegamma, paired = TRUE)$p.value,
+#            grapes_v_newNegamma = t.test(GammaZero.negGmean, newNegamma, paired = TRUE)$p.value,
+#            across(where(is.numeric), list(avg = mean, sd = sd)))
+#
+## calc true alpha and plot with est_alpha
+#count_sfs_names <- list.files(list.dirs(path = "/nas/longleaf/home/adaigle/SFS/pos"), pattern = "count.fixed")
+#count_sfs_df_list <- lapply(
+#    paste0(path_to_files,count_sfs_names), 
+#    function(x) read.table(x, header=TRUE))
+#
+#fixed_table <- tibble(
+#    name = list.files(path = path_to_files, pattern = "count.fixed"),
+#    matchname = sub("_count.fixed","",name),
+#    fullpath = paste0(path_to_files, "/", name), 
+#    data = lapply(fullpath,read.table)
+#)
+
+## KS test
+#set.seed(42)
+#n <- 100
+#test <- prediction_accuracy_table %>% mutate(
+#  true_rgamma = list(rgamma(n,shape=true_shape, rate = 1/(true_mean/(2*100)))),
+#  dfealpha_rgamma = list(rgamma(n,shape=as.numeric(b), rate = 1/(as.numeric(gamma)/(2*100)))),
+#  grapes_rgamma = list(rgamma(n,shape=GammaZero.negGshape, rate = 1/(GammaZero.negGmean/(2*100)))),
+#  adusted_rgamma = list(rgamma(n,shape=true_shape, rate = 1/(adjusted_gamma/(2*100)))),
+#  F_rgamma = list(rgamma(n,shape=true_shape, rate = 1/(F_adjusted_gamma/(2*100)))),
+#  newNe_rgamma = list(rgamma(n,shape=true_shape, rate = 1/(newNegamma/(2*100)))),
+#) 
+#func <- function(x,y) { ks.test(x,y)$p.value}
+#mapply(func, test$true_rgamma,test$dfealpha_rgamma)
+#mapply(func, test$true_rgamma,test$dfealpha_rgamma)
+#mapply(func, test$true_rgamma,test$dfealpha_rgamma)
+#mapply(func, test$true_rgamma,test$dfealpha_rgamma)
+#
+#ks_tests_pval <- test %>% 
+#  group_by(DFE,selfing) %>%
+#  summarize(dfealpha_v_true = list(mapply(func, dfealpha_rgamma, true_rgamma)),
+#            grapes_v_true = list(mapply(func, grapes_rgamma, true_rgamma)),
+#            dfealpha_v_adjustedgamma = list(mapply(func, dfealpha_rgamma, adusted_rgamma)),
+#            grapes_v_adjustedgamma = list(mapply(func, grapes_rgamma, adusted_rgamma)),
+#            dfealpha_v_Fgamma = list(mapply(func, dfealpha_rgamma, F_rgamma)),
+#            grapes_v_Fgamma = list(mapply(func, grapes_rgamma, F_rgamma)),
+#            dfealpha_newNegamma = list(mapply(func, dfealpha_rgamma, newNe_rgamma)),
+#            grapes_v_newNegamma = list(mapply(func, grapes_rgamma, newNe_rgamma))
+#  )
+#            #across(where(is.numeric), list(avg = mean, sd = sd)))
+#
+#
+#prediction_accuracy_table %>% filter(DFE == "DFE1", selfing == 99)
+
+
+#gamma plot
+#hist(rgamma(n=100000, shape = 100, rate = (100/.025)), type = 'line')
+
+##################################################
+#Analyzing grapes GammaExpo results
+
+
+grapes_dir <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/"
+dom_output_dirs <- paste0(grapes_dir, dir(grapes_dir, pattern = "grapes_dom_output"), "/all")
+
+#table of results with columns signifying selfing%, DFE, and output
+dom_grapes_raw_results <- tibble(
+    name = list.files(path = dom_output_dirs, pattern = ".csv$"),
+    matchname = sub(".txt.csv","",name), #will be useful for comparing results later, or combining with other programs
+    DFE = str_extract(matchname, "(DFE)\\d+"),
+    fullpath = paste(dom_output_dirs, "/", name,sep=""),
+    selfing = str_extract(fullpath, "(?<=grapes_dom_output_)\\d+"),
+    data = lapply(fullpath,read.csv)
+)
+
+#now I want to clean this up because it has too much going on
+# I will keep just the gammazero row in each DF
+dom_grapes_gammazero_raw_results <- dom_grapes_raw_results %>% 
+    mutate(data = map(data, ~ { #start of a mapping funciton, which is applied to each df in column
+    df_filtered <- .x %>% filter(model == 'GammaZero') %>% #select only GammaZero row
+    select(1:52) %>%# removing prediction columns for now
+    select_if(~ all(!is.na(.))) # remove NA columns
+    return(df_filtered)
+}))
+
+#now i summarize the outputs by averaging them and finding the standard deviation
+#first I turn my table of dataframes into a dataframe, because my df's only had one row 
+# Extract the column of data frames and bind them into a single data frame
+df <- dom_grapes_gammazero_raw_results$data %>% bind_rows() %>% mutate(row_number = row_number())
+
+dom_grapes_gammazero_raw_results <- dom_grapes_gammazero_raw_results  %>% 
+    mutate(row_number = row_number()) %>% 
+    left_join(df, by = "row_number") %>% 
+    select(-data, -row_number) %>%
+    as.data.frame
+
+dom_grapes_gammazero_raw_results_wtruth <- dom_grapes_gammazero_raw_results %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE]))
+
+dom_grapes_gammazero_raw_results_wclasses <- dom_grapes_gammazero_raw_results %>%
+  mutate(output = map2(GammaZero.negGmean, GammaZero.negGshape, DFE_proportions_grapes)) %>%
+  unnest_wider(output) %>%
+  rename(t0 = f0) %>%  #had to rename columns bc i rerun the function
+  rename(t1 = f1) %>% 
+  rename(t2 = f2) %>% 
+  rename(t3 = f3) %>% group_by(selfing,DFE)
+
+dom_grapes_summary <- dom_grapes_gammazero_raw_results_wclasses %>% 
+group_by(selfing, DFE) %>%
+summarize(across(where(is.numeric), list(avg = mean, sd = sd)))
+
+
+
+dom_grapes_simple_summary <- 
+    dom_grapes_summary[
+        c('DFE','selfing','t0_avg','t1_avg', 't2_avg', 't3_avg',
+            't0_sd','t1_sd', 't2_sd', 't3_sd')] %>%
+    group_by(DFE) %>%
+    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+    mutate(true_shape = unlist(true_betas[DFE])) %>% 
+    mutate(output = pmap(list(true_mean, true_shape, 100), DFE_proportions_dfe_alpha)) %>% #modified so I assume gamma = 2Nes
+    unnest_wider(output) %>%
+    rename(
+        'z0' = f0,
+        'z1'= f1 ,
+        'z2'= f2 ,
+        'z3'= f3 ,
+        'f0' = t0_avg , 
+        'f1' = t1_avg , 
+        'f2' = t2_avg , 
+        'f3' = t3_avg ,
+        'f0_sd'= t0_sd , 
+        'f1_sd'= t1_sd , 
+        'f2_sd'= t2_sd , 
+        'f3_sd' = t3_sd)
+# convert the data frame to a tidy format
+domgrapes_df_tidy <- gather(dom_grapes_simple_summary, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) 
+
+domgrapes_df_true_tidy <- gather(dom_grapes_simple_summary, 
+    key = "generation", value = "value", c(z0:z3)) %>%
+    mutate(generation = recode(generation,
+        z0 = 'f0', 
+        z1 = 'f1', 
+        z2 = 'f2', 
+        z3 = 'f3'
+    ))  %>% 
+    select(1,13:14) %>% distinct() %>%
+    mutate(selfing = "True0")
+
+#work in progress
+#dom_dataframe_of_truth <- #must run calculate_pi.r
+#dom_summary_table %>% 
+#    mutate(row_names = row.names(pos_summary_table),
+#    DFE = str_extract(row_names, "(DFE)\\d+"),
+#    selfing = str_extract(row_names, "(?<=selfing)\\d+"),) %>% 
+#    tibble() %>%
+#    group_by(DFE) %>%
+#    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+#    mutate(true_shape = unlist(true_betas[DFE]))
+#
+#dom_dataframe_of_truth <- dom_dataframe_of_truth %>% 
+#mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+#    unnest_wider(output) 
+#
+###new tidy version with multiple replicates. Can remove other two versions above if this is working out
+#dataframe_of_truth2_dom <- dataframe_of_truth2 %>% filter(str_detect(fullpath, "dom,")) %>%
+#mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+#    unnest_wider(output) %>%
+#    group_by(selfing, DFE) %>%
+#    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+#    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+#    rename(f1 = f1_avg) %>% 
+#    rename(f2 = f2_avg) %>% 
+#    rename(f3 = f3_avg) 
+
+#pos_truth_tidy <- gather(dataframe_of_truth2_pos, 
+#    key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
+#    mutate(selfing = case_when(
+#        selfing == '0'  ~ 'true0_recalc', 
+#        selfing == '50' ~ 'true50', 
+#        selfing == '80' ~ 'true80', 
+#        selfing == '90' ~ 'true90',
+#        selfing == '95' ~ 'true95',
+#        selfing == '99' ~ 'true99',
+#        TRUE ~ selfing
+#    ))
+#
+# currently lacks adjusted truth
+dom_grapes_for_plotting <- bind_rows(domgrapes_df_tidy,domgrapes_df_true_tidy) %>%
+    select(1:6,13:14) %>%
+    melt() %>% 
+    mutate(value = ifelse(is.na(value), 0, value)) %>% 
+    filter(variable == "value" | paste0(generation, "_sd") == variable)
+
+dom_grapes_for_plotting$variable <- ifelse(grepl("_sd", dom_grapes_for_plotting$variable), "sd", "value")  
+
+dom_voodoo_grapes <- pivot_wider(dom_grapes_for_plotting, id_cols = c("generation","DFE","selfing"), 
+    names_from = "variable", values_from = "value") 
+dom_voodoo_grapes <- dom_voodoo_grapes %>% 
+    mutate(selfing = case_when(
+        selfing == "True0" ~ "truth",
+        selfing == "true0_recalc" ~ "true0",
+        selfing == 0~ "0_grapes",
+        selfing == 50 ~ "50_grapes",
+        selfing == 80 ~ "80_grapes",
+        selfing == 90 ~ "90_grapes",
+        selfing == 95 ~ "95_grapes",
+        selfing == 99 ~ "99_grapes",
+        TRUE ~ selfing
+    ))
+dom_voodoo_grapes <- filter(dom_voodoo_grapes, !(selfing %in% c('true90', 'true80', 'true95'))) #leaving filtering for last so that I can toggle what I want in the chart
+#pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(DFE %in% c('DFE3'))) # was used before DFE2 run was complete
+selfing_order <- c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")
+
+# Create the grouped bar chart with custom selfing order
+ggplot(dom_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, levels = c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 2) +
+  labs(title = "Grapes selection (h=.25) deleterious DFEs", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1))
+
+  
+dom_voodoo_grapes2_truth <- dom_voodoo_grapes %>% filter(grepl("truth", selfing))
+dom_voodoo_grapes2_not_truth <- dom_voodoo_grapes %>% filter(!grepl("truth", selfing))
+
+# Replicate "truth" data frame
+df_truth_rep <- dom_voodoo_grapes2_truth %>% slice(rep(1:n(), each = 6))
+
+# Assign selfing class to replicated "truth" data frame
+df_truth_rep_self <- df_truth_rep %>%
+  mutate(
+    replicate = rep(1:6, length.out = n()),
+    selfing_class = case_when(
+      replicate == 1 ~ "0% Selfing",
+      replicate == 2 ~ "50% Selfing",
+      replicate == 3 ~ "80% Selfing",
+      replicate == 4 ~ "90% Selfing",
+      replicate == 5 ~ "95% Selfing",
+      replicate == 6 ~ "99% Selfing",
+      TRUE ~ "error"
+    )
+  ) %>%
+  filter(!(replicate %in% c(3, 4, 5))) %>% #leaving this here in case we add more selfing levels
+  select(-replicate)
+
+dom_voodoo_grapes2 <- dom_voodoo_grapes2_not_truth %>%
+mutate(
+    selfing_class = case_when(
+      selfing == "0_grapes" ~ "0% Selfing",
+      selfing == "50_grapes" ~ "50% Selfing",
+      #selfing == "80_grapes" ~ "80% Selfing",
+      #selfing == "90_grapes" ~ "90% Selfing",
+      #selfing == "95_grapes" ~ "95% Selfing",
+      selfing == "99_grapes" ~ "99% Selfing",
+      selfing == paste0("true", selfing_nums[1]) ~ "0% Selfing",
+      selfing == paste0("true", selfing_nums[2]) ~ "50% Selfing",
+      #selfing == paste0("true", selfing_nums[3]) ~ "80% Selfing",
+      #selfing == paste0("true", selfing_nums[4]) ~ "90% Selfing",
+      #selfing == paste0("true", selfing_nums[5]) ~ "95% Selfing",
+      selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
+    )
+)
+
+#plot gammaexpo results
+ggplot(rbind(dom_voodoo_grapes2, df_truth_rep_self), aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "true0", "0_grapes", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "Grapes (h=0.25)", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF"),6))) + 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))

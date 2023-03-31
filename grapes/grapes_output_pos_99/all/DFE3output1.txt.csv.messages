@@ -1,0 +1,18 @@
+!!! Second order derivative is negative for parameter pos_prop(-0.549306). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(-1.09861). Moving in the other direction.
+!!! Second order derivative is negative for parameter posGmean(0.971026). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(2.07932). Moving in the other direction.
+!!! Second order derivative is negative for parameter syno_orientation_error(-0.411357). Moving in the other direction.
+!!! Second order derivative is negative for parameter negGshape(-3.48769). Moving in the other direction.
+!!! Second order derivative is negative for parameter posGmean(0.787036). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(1.55661). Moving in the other direction.
+!!! Second order derivative is negative for parameter pos_prop(0.985113). Moving in the other direction.
+!!! Function at new point is greater than at current point: 172.151>166.131. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 168.765>166.131. Applying Felsenstein-Churchill correction: 1
+!!! Second order derivative is negative for parameter negGshape(-3.50834). Moving in the other direction.
+!!! Function at new point is greater than at current point: 284.989>165.615. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 174.267>165.615. Applying Felsenstein-Churchill correction: 1
+!!! Function at new point is greater than at current point: 165.945>165.615. Applying Felsenstein-Churchill correction: 2
+!!! Function at new point is greater than at current point: 165.292>165.29. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 165.287>165.287. Applying Felsenstein-Churchill correction: 0
+!!! Function at new point is greater than at current point: 165.285>165.285. Applying Felsenstein-Churchill correction: 0
