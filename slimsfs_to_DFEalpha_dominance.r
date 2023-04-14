@@ -5,10 +5,10 @@
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/SFS/99/"
-path_to_DFESelfing <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/DFE_alpha_dom_input_99/"
-path_to_dfe_alpha_output <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/DFE_alpha_dom_output_99/"
-path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_dom_input_99/"
+path_to_files <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/SFS/0/"
+path_to_DFESelfing <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/DFE_alpha_dom_input_0/"
+path_to_dfe_alpha_output <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/DFE_alpha_dom_output_0/"
+path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_dom_input_0/"
 
 #total neutral sites is 187500
 neutral_sites <- 187500
@@ -194,7 +194,7 @@ dfealpha_sfs <- function(x) {
     #write neutral and selected config files
     write("data_path_1 /nas/longleaf/home/adaigle/work/johri_elegans/data
 site_class 0
-fold 1
+fold 0
 epochs 2
 search_n2 1
 t2_variable 1
@@ -207,7 +207,7 @@ t2 50", file = neuconfigpath )
         file = neuconfigpath, append = TRUE)
     write("data_path_1 /nas/longleaf/home/adaigle/work/johri_elegans/data
 site_class 1
-fold 1
+fold 0
 epochs 2
 mean_s_variable 1
 mean_s -0.01

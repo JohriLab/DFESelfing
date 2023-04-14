@@ -5,13 +5,11 @@
 #initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/SFS/99/"
-path_to_DFESelfing <- "/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_input_99/"
-path_to_dfe_alpha_output <- "/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_output_99/"
-path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_input_99/"
+path_to_files <- "/nas/longleaf/home/adaigle/work/lowrecombination_inputsandoutputs/SFS/"
+path_to_DFESelfing <- "/nas/longleaf/home/adaigle/work/lowrecombination_inputsandoutputs/DFE_alpha_lowrecom/"
+path_to_dfe_alpha_output <- "/nas/longleaf/home/adaigle/work/lowrecombination_inputsandoutputs/DFE_alpha_lowrecom_output/"
+path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/work/lowrecombination_inputsandoutputs/grapes_lowrecom_input/"
 
-dir.create(file.path(path_to_DFESelfing))
-dir.create(file.path(path_to_dfe_alpha_output))
 #total neutral sites is 187500
 neutral_sites <- 187500
 #total selected sites are 562500
@@ -89,31 +87,31 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 }
 
 #plot row as DF
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[2, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[3, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[4, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[5, 3:102]))
-barplot(tapply(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 3:102]), rep(1:10, each = 10), sum))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 3:101]))
+#
+#
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 3:101]))
+#
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[2, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 50:102]))
+#
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[2, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 50:102]))
+#barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 50:102]))
 
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[2, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[3, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[4, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[5, 3:102]))
-barplot(tapply(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 3:102]), rep(1:10, each = 10), sum))
-
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 50:101]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[2, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 50:102]))
-
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[2, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 50:102]))
 #complex fraction change stuff
 #cell to frac
 #neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[3, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 2:102]))
@@ -136,19 +134,19 @@ barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 50:102]))
 #div <- sel2frac/neu2frac
 #div[is.infinite(div)] <- 0
 #barplot(div)
-
-#dfe2
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[1, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[2, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[3, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[4, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[5, 3:101]))
-
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[1, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[2, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[3, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[4, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[5, 3:101]))
+#
+##dfe2
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[5, 3:101]))
+#
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[1, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[2, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[3, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[4, 3:101]))
+#barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[5, 3:101]))
 #
 ## set up the plot layout
 #par(mfrow = c(2, 3), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0), xpd = TRUE)
@@ -171,6 +169,7 @@ replicates <- get(combined_df_names_list[1])$filename
 
 #clears out script to run dfe alpha 
 #write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
+
 
 
 dfealpha_sfs <- function(x) {
@@ -238,33 +237,6 @@ s_additional 0 ", file = selconfigpath)
 }}
 
 lapply(DFE_list, dfealpha_sfs)
-
-
-#path_to_polyDFE_current_input <- "/nas/longleaf/home/adaigle/DFESelfing/polyDFE_input/"
-
-# this function creates input sfs files for polydfe 
-# we won't be using it so its commented out for now
-#will add commands in a bit
-#polydfe_sfs <- function(x) {
-#for(y in replicates) {
-#    df <- data.frame(Map(c,
-#        get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
-#            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_neu", sep = ""), 
-#            combined_df_names_list)])$filename == y, ],
-#        get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
-#            combined_df_names_list)])[get(combined_df_names_list[grepl(paste(x, "_sel", sep = ""), 
-#            combined_df_names_list)])$filename == y, ]))
-#    #path and name of final file
-#    filepath <- paste(path_to_DFESelfing, x, y, sep = "")
-#    df_stripped <- df[2:102]
-#    names(df_stripped) <- NULL
-#    #write to fle with proper header structure. Assumes 100 alleles were chosen
-#    write(1 1 100, file = filepath)
-#    write(100, file = filepath, append = TRUE)
-#    write.table(df_stripped, row.names = FALSE, quote = FALSE, 
-#        file = filepath, append = TRUE)
-#
-#}}
 
 
 # this function creates input sfs files for grapes

@@ -41,7 +41,7 @@ tidy_summary_table <- tidy_summary_table %>% mutate(newdata3 = lapply(newdata2, 
     m1_count = unlist(lapply(m1, sum)), # quick way to count m1 rows  pt 2
     m2_count = unlist(lapply(m2, sum)),
     m4_count = unlist(lapply(m4, sum)),
-    neutral_m4 = lapply(newdata3, function(x) x %>% filter((mutation_class == "m4"), as.numeric(s) < (5/10000) )),
+    neutral_m4 = lapply(newdata3, function(x) x %>% filter((mutation_class == "m4"), 2*5000*as.numeric(s) < 5 )),
     neutral_m4_count = unlist(lapply(neutral_m4, function(x) nrow(x))),
     alpha = (as.numeric(m4_count) - neutral_m4_count)/ (as.numeric(m2_count) + as.numeric(m4_count))
 )
