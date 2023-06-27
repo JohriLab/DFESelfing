@@ -9,6 +9,8 @@ library(tidyverse)
 #sum(2*p*(1-p))/total_neu_mutations
 total_neu_mutations <- 187500
 total_sel_mutations <- 562500
+theta <- 4*5000*3.3e-9*100
+
 #need to read in all m1_output.txt files in a way that preserves selfing%_DFE#_replicate structure
 #get pi for each output
 #average and std dev for each DFE and make table like I did for gamma and beta
@@ -43,12 +45,12 @@ summary_table <- summary_table[-1]
 colnames(summary_table) <- c("pi", "pi_sd", "segregating_sites", "segregating_sites_sd")
 #relative biases due to selfing/dfe
 #E(pi) is theta in a neutral model
-theta <- 4*5000*3.3e-9*100
 #aka B, background selection
 summary_table$B <- as.numeric(summary_table$pi)/(theta)
+summary_table$Bsd <- as.numeric(summary_table$pi_sd)/(theta)
 #empircal Ne = B*Ne
 summary_table$empirical_Ne <- summary_table$B*5000
-write.csv(summary_table, file="/nas/longleaf/home/adaigle/DFESelfing/pi_summary.csv")
+#write.csv(summary_table, file="/nas/longleaf/home/adaigle/DFESelfing/pi_summary.csv")
 
 summary_table$Nempirical <- as.numeric(summary_table$pi)/(4*3.3e-9*100)
 
@@ -80,7 +82,6 @@ pos_summary_table <- pos_summary_table[-1]
 colnames(pos_summary_table) <- c("pi", "pi_sd")
 #relative biases due to selfing/dfe
 #E(pi) is theta in a neutral model
-theta <- 4*5000*3.3e-9*100
 #aka B, background selection
 pos_summary_table$B <- as.numeric(pos_summary_table$pi)/(theta)
 #empircal Ne = B*Ne
@@ -157,3 +158,4 @@ tidy_summary_table <- tibble(
     empirical_Ne = B*5000
 ) %>% 
 mutate(data = NULL)#don't need the big dataframes anymore
+
