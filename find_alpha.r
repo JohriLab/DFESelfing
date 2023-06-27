@@ -48,7 +48,10 @@ tidy_summary_table <- tidy_summary_table %>% mutate(newdata3 = lapply(newdata2, 
 
 tidy_summary_table <- tidy_summary_table %>% mutate(filtered_lines = NULL, newdata = NULL,newdata1 = NULL,newdata2 = NULL,newdata3 = NULL, m1 = NULL, m2 = NULL, m4 = NULL, neutral_m4 = NULL)
 
-write.table(tidy_summary_table, file = "/nas/longleaf/home/adaigle/DFESelfing/alpha_list.txt", 
-    quote = FALSE, row.names = FALSE)
+#write.table(tidy_summary_table, file = "/nas/longleaf/home/adaigle/DFESelfing/alpha_list.txt", 
+#    quote = FALSE, row.names = FALSE)
 
     #(as.numeric(m1_count)  removed for n0w
+
+
+# Find 

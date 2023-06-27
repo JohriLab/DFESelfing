@@ -32,7 +32,7 @@ library(tidyverse)
 #gg <- ggplot(summarize_outputs, aes(x = entry_number, y = means, fill = factor(SFS, levels = c("selected", "neutral")))) +
 #  geom_bar(stat = "identity", position = "dodge", colour = "black") +
 #  geom_errorbar(aes(ymin = means - sd, ymax = means + sd), position = position_dodge(width = 0.9)) +
-#  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+#  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
 #  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
 #  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
 #  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
@@ -64,7 +64,7 @@ library(tidyverse)
 #ggplot(summarize_outputs, aes(x = entry_number, y = mean10, fill = factor(SFS, levels = c("selected", "neutral")))) +
 #  geom_bar(stat = "identity", position = "dodge", colour = "black") +
 #  geom_errorbar(aes(ymin = mean10 - sd10, ymax = mean10 + sd10), position = position_dodge(width = 0.9)) +
-#  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+#  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
 #  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
 #  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
 #  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
@@ -218,7 +218,7 @@ plotting_df <- bind_rows(flatten(results))
 #total number
 ggplot(plotting_df, aes(x = entry_number, y = mean, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -229,7 +229,7 @@ ggplot(plotting_df, aes(x = entry_number, y = mean, fill = factor(SFS))) +
 #proportion
 ggplot(plotting_df, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -243,7 +243,7 @@ plotting_df_less <- plotting_df %>% filter(selfing != 80 & selfing != 90 & selfi
 #total number
 ggplot(plotting_df_less, aes(x = entry_number, y = mean, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -252,18 +252,22 @@ ggplot(plotting_df_less, aes(x = entry_number, y = mean, fill = factor(SFS))) +
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
 
-#proportion
+#simple SFS example
+plotting_df_less<- plotting_df_less %>% filter(selfing == 0 & DFE == 'DFE3')
 ggplot(plotting_df_less, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
-  geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
+  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "Site Frequency Spectrum (SFS)", fill = "SFS Type") +
+  #geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
-  facet_grid(rows = vars(DFE), cols = vars(selfing)) +
+  #facet_grid(rows = vars(DFE), cols = vars(selfing)) +
   #scale_fill_manual(values = c("#404040", rep(c("purple"),6))) + 
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_classic()+
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
-
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15)) +
+  scale_x_continuous(breaks = c(1, seq(5, 20, by = 5), 26),
+                       labels = c(1, seq(5, 20, by = 5), "26+"), expand = c(0, 0))
 
 
 
@@ -272,7 +276,7 @@ plotting_df_809095 <- plotting_df %>% filter(selfing != 0 & selfing != 50 & self
 #total number
 ggplot(plotting_df_809095, aes(x = entry_number, y = mean, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -283,7 +287,7 @@ ggplot(plotting_df_809095, aes(x = entry_number, y = mean, fill = factor(SFS))) 
 #proportion
 ggplot(plotting_df_809095, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -297,7 +301,7 @@ plotting_df_0909599 <- plotting_df %>% filter(selfing != 80 & selfing != 50)
 #total number
 ggplot(plotting_df_0909599, aes(x = entry_number, y = mean, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -308,7 +312,7 @@ ggplot(plotting_df_0909599, aes(x = entry_number, y = mean, fill = factor(SFS)))
 #proportion
 ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   #expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
@@ -317,15 +321,146 @@ ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = factor(SFS)))
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
 
-
-#function outputs DFs as I'd want for plotting. Just need the columns to represent proportions rather than totals, and to 
-# need to merge all the listed DFs into a tibble, then run the function on all selfings and make a mega tibble, then plot
-
-
+ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = factor(SFS))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
+  labs(x = "Derived allele frequency", y = "Proportion of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
+  geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing)) +
+  #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
+  #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
+        strip.text = element_text(size=15), plot.title= element_text(size=25), 
+        legend.title = element_text(size=15), legend.text = element_text(size=15)) +
+  #important addition to make x axis more readable
+  scale_x_continuous(breaks = c(1, seq(5, 20, by = 5), 26),
+                       labels = c(1, seq(5, 20, by = 5), "26+"))
+#code to plot one SFS
 #ggplot(summarize_outputs, aes(x = entry_number, y = mean10, fill = factor(SFS, levels = c("selected", "neutral")))) +
 #  geom_bar(stat = "identity", position = "dodge", colour = "black") +
 #  geom_errorbar(aes(ymin = mean10 - sd10, ymax = mean10 + sd10), position = position_dodge(width = 0.9)) +
-#  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "SFS Prototype", fill = "SFS Type") +
+#  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "Site frequency spectra from deleterious-only simulations", fill = "SFS Type") +
 #  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
 #  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
 #  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+elegans_sfs <- read.table("/nas/longleaf/home/adaigle/DFESelfing/elegans_sfs.txt")
+elegans_invariant_sfs <- read.table("/nas/longleaf/home/adaigle/DFESelfing/elegans_invariant_sfs.txt")
+elegans_diverged_sfs <- read.table("/nas/longleaf/home/adaigle/DFESelfing/elegans_diverged_sfs.txt")
+elegans_diverged_invariant_sfs <- read.table("/nas/longleaf/home/adaigle/DFESelfing/elegans_diverged_invariant_sfs.txt")
+
+f <- rep(c(1:25,26), times = c(rep(1, each =25),26))
+neutral_last75 <- t(apply(elegans_diverged_sfs[2,][2:52], 1, function(x) {
+      tapply(as.numeric(x), f, sum)
+    }))
+    #neutral_last75_prop <- t(apply(get(paste0("eqm_selfing", selfing, "_", DFE_list[DFE], "_neu_100_m1")), 1, function(x) {
+    #  tapply(as.numeric(x[3:101]), f, function(x) as.numeric(x)/sum(as.numeric(x)))
+    #}))
+    neutral_last75_prop <- t(apply(neutral_last75, 1, function(x) x/sum(x)))
+    selected_last75 <- t(apply(elegans_diverged_sfs[1,][2:52], 1, function(x) {
+      tapply(as.numeric(x), f, sum)
+    }))
+    #selected_last75_prop <- t(apply(get(paste0("eqm_selfing", selfing, "_", DFE_list[DFE], "_sel_100_m2")), 1, function(x) {
+    #  tapply(as.numeric(x[3:101]), f, function(x) as.numeric(x)/sum(as.numeric(x)))
+    #}))
+    selected_last75_prop <- t(apply(selected_last75, 1, function(x) x/sum(x)))
+
+    summarize_outputs_neutral_last75 <- tibble(
+        mean = apply(neutral_last75, 2, mean),
+        sd = apply(neutral_last75, 2, sd),
+        prop = apply(neutral_last75_prop, 2, mean),
+        propsd = apply(neutral_last75_prop, 2, sd), 
+        entry_number = 1:length(mean),
+        SFS = "neutral"
+        ) #%>% 
+        #mutate(
+        #    prop = mean/sum(mean),
+        #    propsd = prop, 2, sd)
+    #summarize_outputs_neutral_last75$proportion <- summarize_outputs_neutral_last75$mean / sum(summarize_outputs_neutral_last75$mean) 
+    
+    #summarize_outputs_neutral_last75$proportionsd <- apply(summarize_outputs_neutral_last75$proportion, 2, sd)
+
+    summarize_outputs_selected_last75 <- tibble(
+        mean = apply(selected_last75, 2, mean),
+        sd = apply(selected_last75, 2, sd),
+        prop = apply(selected_last75_prop, 2, mean),
+        propsd = apply(selected_last75_prop, 2, sd), 
+        entry_number = 1:length(mean),
+        SFS = "selected"
+        )
+df <- as.data.frame(rbind(summarize_outputs_selected_last75, summarize_outputs_neutral_last75))
+
+#code to plot one SFS
+
+ggplot(df, aes(x = entry_number, y = mean, fill = factor(SFS, levels = c("selected", "neutral")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+ggplot(df, aes(x = entry_number, y = prop, fill = factor(SFS, levels = c("selected", "neutral")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  #geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+
+f <- rep(c(1:25,26), times = c(rep(1, each =25),26))
+neutral_last75 <- t(apply(elegans_diverged_invariant_sfs[2,][2:52], 1, function(x) {
+      tapply(as.numeric(x), f, sum)
+    }))
+    #neutral_last75_prop <- t(apply(get(paste0("eqm_selfing", selfing, "_", DFE_list[DFE], "_neu_100_m1")), 1, function(x) {
+    #  tapply(as.numeric(x[3:101]), f, function(x) as.numeric(x)/sum(as.numeric(x)))
+    #}))
+    neutral_last75_prop <- t(apply(neutral_last75, 1, function(x) x/sum(x)))
+    selected_last75 <- t(apply(elegans_diverged_invariant_sfs[1,][2:52], 1, function(x) {
+      tapply(as.numeric(x), f, sum)
+    }))
+    #selected_last75_prop <- t(apply(get(paste0("eqm_selfing", selfing, "_", DFE_list[DFE], "_sel_100_m2")), 1, function(x) {
+    #  tapply(as.numeric(x[3:101]), f, function(x) as.numeric(x)/sum(as.numeric(x)))
+    #}))
+    selected_last75_prop <- t(apply(selected_last75, 1, function(x) x/sum(x)))
+
+    summarize_outputs_neutral_last75 <- tibble(
+        mean = apply(neutral_last75, 2, mean),
+        sd = apply(neutral_last75, 2, sd),
+        prop = apply(neutral_last75_prop, 2, mean),
+        propsd = apply(neutral_last75_prop, 2, sd), 
+        entry_number = 1:length(mean),
+        SFS = "neutral"
+        ) #%>% 
+        #mutate(
+        #    prop = mean/sum(mean),
+        #    propsd = prop, 2, sd)
+    #summarize_outputs_neutral_last75$proportion <- summarize_outputs_neutral_last75$mean / sum(summarize_outputs_neutral_last75$mean) 
+    
+    #summarize_outputs_neutral_last75$proportionsd <- apply(summarize_outputs_neutral_last75$proportion, 2, sd)
+
+    summarize_outputs_selected_last75 <- tibble(
+        mean = apply(selected_last75, 2, mean),
+        sd = apply(selected_last75, 2, sd),
+        prop = apply(selected_last75_prop, 2, mean),
+        propsd = apply(selected_last75_prop, 2, sd), 
+        entry_number = 1:length(mean),
+        SFS = "selected"
+        )
+df <- as.data.frame(rbind(summarize_outputs_selected_last75, summarize_outputs_neutral_last75))
+ggplot(df, aes(x = entry_number, y = mean, fill = factor(SFS, levels = c("selected", "neutral")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+
+ggplot(df, aes(x = entry_number, y = prop, fill = factor(SFS, levels = c("selected", "neutral")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  #geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
+  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))

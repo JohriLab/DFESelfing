@@ -3,7 +3,8 @@ library(RColorBrewer)
 library(tidyverse)
 source("/nas/longleaf/home/adaigle/DFESelfing/calculate_pi.r")
 library(reshape2)
-
+library(scales)
+library(ggpubr)
 dfealpha_dir <- "/nas/longleaf/home/adaigle/rerun_dfealpha/"
 dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
     "/", dir(
@@ -494,7 +495,7 @@ dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$vari
 voodoo <- pivot_wider(dfealpha_for_plotting, 
   id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value") %>%
 mutate(selfing = case_when(
-        selfing == 'True0'  ~ 'truth', 
+        selfing == 'True0'  ~ 'Simulated DFE', 
         selfing == 'true0_recalc' ~ 'true0',
         selfing == '100' ~ '99',
         TRUE ~ selfing 
@@ -507,29 +508,23 @@ mutate(selfing = case_when(
 dfealpha_rainbow_plot <- voodoo %>% 
   filter(!grepl("F_adjusted|true", selfing)) 
   #filter(grepl("truth", selfing))
-selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+selfing_order <- c("Simulated DFE", 0, 50, 80, 90, 95, 99)
 
-ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
+dfealpha_rainbow <- ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = selfing_order))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  facet_wrap(~ DFE, nrow = 2) +
+  facet_wrap(~ DFE, nrow = 1) +
   labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) + 
+  scale_fill_manual(values = c("#404040", hue_pal()(6))) +
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
 
-#voodoo2 <- voodoo %>% mutate(selfing = case_when(
-#        selfing == 'True0'  ~ 'truth', 
-#        selfing == 'true0_recalc' ~ 'true0',
-#        selfing == '100' ~ '99',
-#        TRUE ~ selfing 
-#))
-#
 
 # Split data frame into "truth" and "non-truth" data frames
-voodoo2_truth <- voodoo %>% filter(grepl("truth", selfing))
+voodoo2_truth <- voodoo %>% filter(grepl("Simulated DFE", selfing))
 voodoo2_not_truth <- voodoo %>% filter(!grepl("truth", selfing))
 
 # Replicate "truth" data frame
@@ -604,7 +599,7 @@ grapes_for_plotting$variable <- ifelse(grepl("_sd", grapes_for_plotting$variable
 
 voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")  %>%
     mutate(selfing = case_when(
-        selfing == "True0" ~ "truth",
+        selfing == "True0" ~ "Simulated DFE",
         selfing == "true0_recalc" ~ "true0",
         TRUE ~ selfing
     ))
@@ -615,20 +610,54 @@ voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE"
 #also cleaning up names for better legend
 grapes_rainbow_plot <- voodoo_grapes %>%
   filter(!grepl("F_adjusted|true", selfing))
-selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+selfing_order <- c("Simulated DFE", 0, 50, 80, 90, 95, 99)
+
+#creating plots with just DFEs
+DFE2 <- grapes_rainbow_plot %>%
+  filter(grepl("Simulated DFE", selfing) & DFE=="DFE2") 
+ggplot(DFE2, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = "Simulated DFE"))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  #facet_wrap(~ DFE, nrow = 1) +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) + 
+  scale_fill_manual(values = c("#404040")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_blank(), legend.text = element_text(size=15))
+DFEs <- grapes_rainbow_plot %>%
+  filter(grepl("Simulated DFE", selfing)) 
+ggplot(DFEs, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = "Simulated DFE"))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 1) +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) + 
+  scale_fill_manual(values = c("#404040")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_blank(), legend.text = element_blank())
 
 # Create the grouped bar chart with custom selfing order
-ggplot(grapes_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
+grapes_rainbow <- ggplot(grapes_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = selfing_order))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   facet_wrap(~ DFE, nrow = 1) +
   labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) + 
+  scale_fill_manual(values = c("#404040", hue_pal()(6))) +
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
 
+figure1 <- ggarrange(dfealpha_rainbow, grapes_rainbow,
+                    labels = c("A", "B"),
+                    font.label = list(size = 24, color = "black", face = "bold", family = NULL),
+                    ncol = 1, nrow = 2,
+                    common.legend = TRUE, legend = "right")
 
 voodoo_grapes2 <- voodoo_grapes %>%
     mutate(selfing = case_when(
@@ -668,14 +697,22 @@ ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing,
   scale_fill_manual(values = c("#404040", rep(c("purple"),6)))+ 
   theme(legend.position="none")
 
-F
+
 # combo dfealpha and grapes plot:
 
-combo_plot <- bind_rows(voodoo3,voodoo3_grapes) 
-  #filter(grepl("truth|true", selfing))
-  #filter(!grepl("F_adjusted", selfing))
+combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
+  filter(!grepl("true", selfing)) %>%
+  filter(!grepl("F_adjusted", selfing)) %>%
+  filter(selfing_class != "80% Selfing") %>%
+  filter(selfing_class != "90% Selfing") %>%
+  filter(selfing_class != "95% Selfing") 
+  #filter(selfing_class != "0% Selfing") %>%
+  #filter(selfing_class != "50% Selfing") %>%
+  #filter(selfing_class != "truth") %>%
+  #filter(selfing_class != "Simulated DFE")
+#write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/99selfingbasic.csv")
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
+    levels = c("Simulated DFE", "F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
         "F_adjusted_99", "true99", 99, "99_grapes")))) +
@@ -684,9 +721,12 @@ ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing,
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
+  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
   theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
+#combo_plot <- combo_plot %>% mutate(dominance=0.5)
+#combo_plot <- combo_plot %>% mutate(intergenic=3000)
+#write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/dom_plot/int3000.csv")
 ##################################################
 #Analyzing grapes GammaExpo results
 
@@ -861,7 +901,8 @@ pos_voodoo_grapes <- pos_voodoo_grapes %>%
         selfing == 99 ~ "99_grapes",
         TRUE ~ selfing
     ))
-pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(selfing %in% c('true90', 'true80', 'true95'))) #leaving filtering for last so that I can toggle what I want in the chart
+pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(selfing %in% c('true90', 'true80', 'true95'))) %>% #leaving filtering for last so that I can toggle what I want in the chart
+  filter(!grepl("F_adjusted|true", selfing)) 
 #pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(DFE %in% c('DFE3'))) # was used before DFE2 run was complete
 selfing_order <- c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")
 
@@ -872,6 +913,17 @@ ggplot(pos_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, 
   labs(title = "Grapes positive selection deleterious DFEs", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1))
+ggplot(pos_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = selfing_order))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  facet_wrap(~ DFE, nrow = 1) +
+  labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) + 
+  scale_fill_manual(values = c("#404040", hue_pal()(6))) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
+  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
 
 ############# summary tables
 #write.csv(dfealpha_summary, file = "/nas/longleaf/home/adaigle/DFESelfing/dfealpha_summary_unfolded.csv")
@@ -945,17 +997,24 @@ mutate(
       selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
     )
   ) 
+posgrapesplot <- rbind(pos_voodoo_grapes2, df_truth_rep_self) %>%
+  filter(!grepl("true", selfing)) %>% 
+  filter(!grepl("error", selfing_class)) %>%
+    mutate(selfing = recode(selfing,
+     '0_grapes' = 'GRAPES',
+     '50_grapes' = 'GRAPES', 
+     '99_grapes' = 'GRAPES'))
 
 
 #plot gammaexpo results
-ggplot(rbind(pos_voodoo_grapes2, df_truth_rep_self), aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "true0", "0_grapes", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
+postive_grapes_plot <- ggplot(posgrapesplot, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "true0", "GRAPES", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "Grapes (with beneficial mutations)", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(title = "Grapes (with beneficial mutations)", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  scale_fill_manual(values = c("#404040", rep(c("#619CFF", "purple"),6))) + 
+  scale_fill_manual(values = c("#404040", rep(c("purple"),6))) + 
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
@@ -979,7 +1038,7 @@ ggplot(grapes_gammaexpo_summary, aes(x = DFE, y = GammaExpo.pos_prop_avg, fill =
 
 #alpha estimates gamma
 alphaplot <- grapes_gammaexpo_summary %>% 
-    mutate(selfing = case_when(
+    mutate(alpha_label = case_when(
         selfing == 'true_alpha_0'  ~ 'True alpha, 0% Selfing', 
         selfing == 'true_alpha_50' ~ 'True alpha, 50% Selfing', 
         selfing == 'true_alpha_99' ~ 'True alpha, 99% Selfing',
@@ -987,21 +1046,46 @@ alphaplot <- grapes_gammaexpo_summary %>%
         selfing == '50' ~ 'Estimated alpha, 50% Selfing', 
         selfing == '99' ~ 'Estimated alpha, 99% Selfing', 
         TRUE ~ selfing
-    ))
+    )) %>% 
+    mutate(selfing_class = case_when(
+        selfing == 'true_alpha_0'  ~ '0% Selfing', 
+        selfing == 'true_alpha_50' ~ '50% Selfing', 
+        selfing == 'true_alpha_99' ~ '99% Selfing',
+        selfing == '0' ~ '0% Selfing', 
+        selfing == '50' ~ '50% Selfing', 
+        selfing == '99' ~ '99% Selfing', 
+        TRUE ~ selfing)) %>% 
+    mutate(truth_pred = case_when(
+        selfing == 'true_alpha_0'  ~ 'Truth', 
+        selfing == 'true_alpha_50' ~ 'Truth', 
+        selfing == 'true_alpha_99' ~ 'Truth',
+        selfing == '0' ~ 'Prediction', 
+        selfing == '50' ~ 'Prediction', 
+        selfing == '99' ~ 'Prediction', 
+        TRUE ~ selfing)) %>% 
+    arrange(factor(truth_pred, levels=c("Truth", "Prediction")))
 
 alpha_order <- c('True alpha, 0% Selfing', 'Estimated alpha, 0% Selfing', 
   'True alpha, 50% Selfing', 'Estimated alpha, 50% Selfing', 
   'True alpha, 99% Selfing', 'Estimated alpha, 99% Selfing')
-ggplot(alphaplot, aes(x = DFE, y = alpha_avg, fill = factor(selfing, alpha_order))) +
-  geom_bar(stat = "identity", position = position_dodge()) +
+postive_grapes_plot_alpha <- ggplot(alphaplot, aes(x=factor(truth_pred, levels=c("Truth", "Prediction")),y = alpha_avg, fill = factor(truth_pred, levels=c("Truth", "Prediction")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
   geom_errorbar(aes(ymin = alpha_avg - alpha_sd,
                     ymax = alpha_avg + alpha_sd),
                 position = position_dodge(width = 0.9), width = 0.2) +
   labs(title = "Grapes GammaExpo model, alpha prediction", x = "DFE", y = "alpha", fill = "") + 
+  scale_fill_manual(values = c(rep(c("#404040", "purple"),6))) + 
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   theme(axis.text.x = element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
 
+
+figure5 <- ggarrange(postive_grapes_plot, postive_grapes_plot_alpha,
+                    labels = c("A", "B"),
+                    font.label = list(size = 24, color = "black", face = "bold", family = NULL),
+                    ncol = 1, nrow = 2,
+                    common.legend = TRUE, legend = "right")
   #############
   #plots for Galtier
 #noselfingplot <- rbind(
@@ -1119,33 +1203,23 @@ mutate(
       selfing == "99" ~ "99% Selfing"
     )
   ) %>%
-  arrange(factor(gamma_method, levels = gammaorder))
+  arrange(factor(gamma_method, levels = gammaorder)) %>%
+  filter(!grepl("F-adjusted", gamma_method)) %>%
+  filter(!grepl("BGS", gamma_method))
 
 #colorblind palete?
-cbPalette <- c("grey", "#E69F00", "#56B4E9", "#009E73", "#F0E442")
-ggplot(prediction_accuracy_table_gamma_melt, aes(x = factor(gamma_method, levels = gammaorder), y = avg, fill = factor(gamma_method, levels = gammaorder))) +
+gamma_accuracy <- ggplot(prediction_accuracy_table_gamma_melt, aes(x = factor(gamma_method, levels = gammaorder), y = avg, fill = factor(gamma_method, levels = gammaorder))) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class), scales = "free_y") +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   #stat_summary(fun.data = "mean_sdl", geom = "bar", position = "dodge") +
   geom_errorbar(aes(ymin = avg-sd, ymax = avg+sd), position = position_dodge(width = 0.9), width = 0.2) +
   labs(x = "Gamma estimation method", y = "Gamma", fill = "Gamma estimation method", title = "Gamma estimation accuracy") + 
-  scale_fill_manual(values=c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
+  scale_fill_manual(values=c("#404040", rep(c("#F8766D", "purple"),6))) + 
   theme(axis.text.x = element_blank(), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
 
-ggplot(bind_rows(voodoo3,voodoo3_grapes), aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
-        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
-        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
-        "F_adjusted_99", "true99", 99, "99_grapes")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
-  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
-  expand_limits(y=c(0,1)) +
-  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6)))+ 
-  theme(legend.position="none")
+
 #beta stuff
 prediction_accuracy_table_beta_melt <- prediction_accuracy_table %>% 
   summarize(across(c(true_shape, b, GammaZero.negGshape), list(avg = mean, sd = sd))) %>%
@@ -1176,7 +1250,7 @@ mutate(
     )
   ) 
 
-ggplot(prediction_accuracy_table_beta_melt, aes(x = gamma_method, y = avg, fill = gamma_method)) +
+beta_accuracy <- ggplot(prediction_accuracy_table_beta_melt, aes(x = gamma_method, y = avg, fill = gamma_method)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class), scales = "free_y") +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   #stat_summary(fun.data = "mean_sdl", geom = "bar", position = "dodge") +
@@ -1187,6 +1261,11 @@ ggplot(prediction_accuracy_table_beta_melt, aes(x = gamma_method, y = avg, fill 
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
   plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
 
+ggarrange(gamma_accuracy, beta_accuracy,
+                    labels = c("A", "B"),
+                    font.label = list(size = 24, color = "black", face = "bold", family = NULL),
+                    ncol = 1, nrow = 2,
+                    common.legend = TRUE, legend = "right")
 
 #t_tests <- prediction_accuracy_table %>% group_by(DFE,selfing) %>%
 #  summarize(dfealpha_v_true = list(t.test(gamma, true_mean, paired = TRUE)),
