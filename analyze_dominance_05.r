@@ -26,7 +26,8 @@ dfealpha_raw_results <- tibble(
             `colnames<-`(.[1,]) %>%
             .[-1,] %>%
             `rownames<-`(NULL))
-)
+) %>%
+    filter(selfing==c(0,50,99))
 
 df <- dfealpha_raw_results$data %>% bind_rows()
 df <- df %>% mutate(row_number = row_number())
@@ -129,7 +130,8 @@ grapes_raw_results <- tibble(
     fullpath = paste(output_dirs, "/", name,sep=""),
     selfing = str_extract(fullpath, "(?<=grapes_output_)\\d+"),
     data = lapply(fullpath,read.csv)
-)
+) %>%
+    filter(selfing==c(0,50,99))
 
 #now I want to clean this up because it has too much going on
 # I will keep just the gammazero row in each DF
@@ -163,9 +165,9 @@ grapes_gammazero_raw_results <- grapes_gammazero_raw_results %>%
 # for now I'll take one experiment at a time
 
 true_gammas <- list(
-  DFE1 = 0.5*5,
-  DFE2 = 0.5*50,
-  DFE3 = 0.5*1000
+  DFE1 = 5,
+  DFE2 = 50,
+  DFE3 = 1000
 )
 true_betas <- list(
   DFE1 = 0.9,
@@ -244,12 +246,22 @@ dataframe_of_truth2 <-
     mutate(true_mean = unlist(true_gammas[DFE])) %>%
     mutate(true_shape = unlist(true_betas[DFE]))
 ###making gamma and beta summary table for the non adaptive situation
+find_h <- function(selfing,h) {
+    s <- selfing / 100
+    F <- s / (2-s)
+    #new_h <- (1+F)*h
+    #new_h <- F+(1-F)*h/(1+F)
+    new_h <- F+(1-F)*h
+    return(new_h)
+}
+
 dataframe_of_truth3 <- dataframe_of_truth2 %>%
   mutate(adjusted_gamma = B * true_mean) %>%
+  mutate(dominance_gamma = true_mean * find_h(as.numeric(selfing), 0.5)) %>% # need selfing % and dominance
   mutate(matchname = paste0(DFE,"output",output)) %>%
   filter(!str_detect(fullpath, "pos")) %>%
   group_by(DFE,selfing,matchname) %>%
-  select(c(matchname,B, empirical_Ne, DFE, selfing, true_mean, true_shape, adjusted_gamma)) 
+  select(c(matchname,B, empirical_Ne, DFE, selfing, true_mean, true_shape, adjusted_gamma, dominance_gamma)) 
 
 dfealpha_summary2 <- dfealpha_raw_results %>%
   mutate(selfing = ifelse(selfing == "100", "99", selfing)) %>%
@@ -266,11 +278,20 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
   arrange(DFE) %>%
   mutate (F = (as.numeric(selfing)/100)/(2-(as.numeric(selfing)/100)),
     selfing_Ne = 5000/(1+F),
+    dfealpha_gamma = gamma * 0.5,
+    grapes_gamma = GammaZero.negGmean * -0.5,
     selfing_B = selfing_Ne / 5000,
-    F_adjusted_gamma = selfing_B * true_mean,
-    deltaNe = selfing_Ne - empirical_Ne,
-    newNE = 5000 - deltaNe,
-    newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
+    F_adjusted_gamma = selfing_B * true_mean)
+    #deltaNe = selfing_Ne - empirical_Ne,
+    #newNE = 5000 - deltaNe,
+    #newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
+
+quick_summary <- prediction_accuracy_table %>% ungroup() %>%
+  select(DFE,selfing,dominance_gamma, dfealpha_gamma, grapes_gamma, b, GammaZero.negGshape) %>%
+  #filter(selfing == 0) %>% 
+  group_by(DFE,selfing) %>%
+  summarize(across(where(is.numeric), list(avg = mean))) 
+write.csv(quick_summary, file="quick_summary_h05_gammas.csv")
 
 
 
@@ -298,7 +319,28 @@ F_adjusted_classes_tidy <- gather(F_adjusted_classes,
         selfing == '99' ~ 'F_adjusted_99',
         TRUE ~ selfing
     ))
+dominance_adjusted_classes <- dataframe_of_truth3 %>%
+  mutate(output = map2(dominance_gamma, true_shape, DFE_proportions_grapes)) %>%
+  unnest_wider(output) %>% 
+  select(DFE, selfing, f0, f1, f2, f3) %>% 
+  group_by(selfing, DFE) %>%
+    summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
+    rename(f0 = f0_avg) %>%  #had to rename columns bc i rerun the function
+    rename(f1 = f1_avg) %>% 
+    rename(f2 = f2_avg) %>% 
+    rename(f3 = f3_avg) 
 
+dominance_adjusted_classes_tidy <- gather(dominance_adjusted_classes, 
+    key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
+    mutate(selfing = case_when(
+        selfing == '0'  ~ 'Dominance_adjusted_0', 
+        selfing == '50' ~ 'Dominance_adjusted_50', 
+        selfing == '80' ~ 'Dominance_adjusted_80', 
+        selfing == '90' ~ 'Dominance_adjusted_90',
+        selfing == '95' ~ 'Dominance_adjusted_95',
+        selfing == '99' ~ 'Dominance_adjusted_99',
+        TRUE ~ selfing
+    ))
 DFE_proportions_truth <- function(B, meanGamma,beta) { 
     # modified function to calc vector of dfe classes given gamma and beta
     # assumes Nw is 100 bc grapes doesn't have two step
@@ -560,21 +602,27 @@ mutate(
       selfing == paste0("true", selfing_nums[1]) ~ "0% Selfing",
       selfing == "0" ~ "0% Selfing",
       selfing == "F_adjusted_0" ~ "0% Selfing",
+      selfing == "Dominance_adjusted_0" ~ "0% Selfing",
       selfing == paste0("true", selfing_nums[2]) ~ "50% Selfing",
       selfing == "50" ~ "50% Selfing",
       selfing == "F_adjusted_50" ~ "50% Selfing",
+      selfing == "Dominance_adjusted_50" ~ "50% Selfing",
       selfing == paste0("true", selfing_nums[3]) ~ "80% Selfing",
       selfing == "80" ~ "80% Selfing",
       selfing == "F_adjusted_80" ~ "80% Selfing",
+      selfing == "Dominance_adjusted_80" ~ "80% Selfing",
       selfing == paste0("true", selfing_nums[4]) ~ "90% Selfing",
       selfing == "90" ~ "90% Selfing",
       selfing == "F_adjusted_90" ~ "90% Selfing",
+      selfing == "Dominance_adjusted_90" ~ "90% Selfing",
       selfing == paste0("true", selfing_nums[5]) ~ "95% Selfing",
       selfing == "95" ~ "95% Selfing",
       selfing == "F_adjusted_95" ~ "95% Selfing",
+      selfing == "Dominance_adjusted_95" ~ "95% Selfing",
       selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
       selfing == "99" ~ "99% Selfing",
       selfing == "F_adjusted_99" ~ "99% Selfing",
+      selfing == "Dominance_adjusted_99" ~ "99% Selfing",
       TRUE ~ "truth"
     )
   )
@@ -681,7 +729,7 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(selfing_class != "90% Selfing") %>%
   filter(selfing_class != "95% Selfing") 
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
+    levels = c("truth", "Dominance_adjusted_0", "Dominance_adjusted_50", "Dominance_adjusted_99" ,"F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
         "F_adjusted_99", "true99", 99, "99_grapes")))) +

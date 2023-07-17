@@ -1,10 +1,10 @@
 rm(list=ls())
 library(RColorBrewer)
 library(tidyverse)
-source("/nas/longleaf/home/adaigle/DFESelfing/calculate_pi_dom01.r")
+source("/nas/longleaf/home/adaigle/DFESelfing/calculate_pi.r")
 library(reshape2)
 
-dfealpha_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/dom/hdel_0_01/dfe_results/dfealpha/"
+dfealpha_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/nolinkage/DFE2_50k_outputs/dfe_results/dfealpha/"
 dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
     "/", dir(
     paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""), pattern = "selected")
@@ -40,7 +40,7 @@ dfealpha_raw_results <- dfealpha_raw_results %>%
     select(-data, -row_number) %>%
     as.data.frame %>% 
     mutate_at(vars(7:14), as.numeric) %>%
-    mutate(gamma = -0.5*2*Nw*Es) %>% #MODIFIED TO ACCOUNT FOR H=0.1
+    mutate(gamma = -2*Nw*Es) %>%
     rename(f0_fromoutput = f0) #f0 is a dfealpha output, but I also need to name a class f0 later
 
 DFE_proportions_dfe_alpha <- function(meanGamma,beta, Nw) { 
@@ -66,9 +66,9 @@ DFE_proportions_dfe_alpha <- function(meanGamma,beta, Nw) {
 # to do this ina  way that makes more sense
 #piemp, get Nemperical, and use that ias your Nw for now one
 true_gammas <- list(
-  DFE1 = (0.1)*5,
-  DFE2 = (0.1)*50,
-  DFE3 = (0.1)*1000
+  DFE1 = 5,
+  DFE2 = 50,
+  DFE3 = 1000
 )
 true_betas <- list(
   DFE1 = 0.9,
@@ -119,7 +119,7 @@ dfealpha_tidy <- gather(dfealpha_summary,
 #_________________________________________________________________________________
 
 #read in all selfing %, dfes, and experiments
-grapes_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/dom/hdel_0_01/dfe_results/grapes/"
+grapes_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/nolinkage/DFE2_50k_outputs/dfe_results/grapes/"
 output_dirs <- paste(grapes_dir, dir(grapes_dir, pattern = "output_\\d"), sep = "")
 #output_dirs <- dfealpha_output_dirs[!grepl("DFE_alpha_output_50/DFE1", dfealpha_output_dirs)]
 #output_dirs <- dfealpha_output_dirs[!grepl("DFE_alpha_output_99|output2", dfealpha_output_dirs)]
@@ -163,17 +163,16 @@ grapes_gammazero_raw_results <- grapes_gammazero_raw_results  %>%
 grapes_gammazero_raw_results <- grapes_gammazero_raw_results %>% 
     left_join(df, by = "row_number") %>% 
     select(-data, -row_number) %>%
-    as.data.frame %>%
-    mutate(GammaZero.negGmean = -0.5*GammaZero.negGmean) #MODIFIED TO ACCOUNT FOR H=0.75
+    as.data.frame
 
 # summarize using group_by and summarize
 # I originally tried using table of dataframes, but got weird
 # for now I'll take one experiment at a time
 
 true_gammas <- list(
-  DFE1 = (0.1)*5,
-  DFE2 = (0.1)*50,
-  DFE3 = (0.1)*1000
+  DFE1 = 5,
+  DFE2 = 50,
+  DFE3 = 1000
 )
 true_betas <- list(
   DFE1 = 0.9,
@@ -192,7 +191,7 @@ DFE_proportions_grapes <- function(meanGamma,beta) {
     # assumes Nw is 100 bc grapes doesn't have two step
     # need to confirm it has no modified Ne
     Nw <- 100 
-    meanS <- (meanGamma)/(2*Nw)
+    meanS <- meanGamma/(2*Nw)
 
     # this code adapted from get_dfe_class_proportions
     s_shape <- beta
@@ -252,10 +251,6 @@ dataframe_of_truth2 <-
     mutate(true_mean = unlist(true_gammas[DFE])) %>%
     mutate(true_shape = unlist(true_betas[DFE]))
 ###making gamma and beta summary table for the non adaptive situation
-
-
-# here I am adjusting the truths by changing the dominance based on the 
-# selfing percentage 
 dataframe_of_truth3 <- dataframe_of_truth2 %>%
   mutate(adjusted_gamma = B * true_mean) %>%
   mutate(matchname = paste0(DFE,"output",output)) %>%
@@ -270,10 +265,7 @@ dfealpha_summary2 <- dfealpha_raw_results %>%
 
 grapes_gammazero_summmary2 <- grapes_gammazero_raw_results %>%
   group_by(DFE,selfing) %>%
-  select(c(matchname,selfing,DFE,GammaZero.negGmean, GammaZero.negGshape))
-  #mutate(
-  #  GammaZero.negGmean = GammaZero.negGmean*(0.5/0.1)
-  #)
+  select(c(matchname,selfing,DFE,GammaZero.negGmean, GammaZero.negGshape)) 
 
 prediction_accuracy_table <- dataframe_of_truth3 %>%
   left_join(dfealpha_summary2) %>%
@@ -690,23 +682,20 @@ ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing,
 combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(!grepl("true", selfing)) %>%
   filter(!grepl("F_adjusted", selfing)) %>%
-  filter(selfing_class != "80% Selfing") %>%
-  filter(selfing_class != "90% Selfing") %>%
-  filter(selfing_class != "95% Selfing") 
-
+  filter(!grepl("80% Selfing|90% Selfing|95% Selfing", selfing_class))
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
         "F_adjusted_99", "true99", 99, "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes, h=0.1", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(title = "DFEalpha and Grapes, norec DFE2", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
-  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
+  scale_fill_manual(values = c("#404040",rep(c("#F8766D", "purple"),3))) + 
   theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
-combo_plot <- combo_plot %>% mutate(dominance=0.1)
-write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/dom_plot/h01.csv")
+#combo_plot <- combo_plot %>% mutate(intergenic=500)
+#write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/intergenic_plot/int500.csv")

@@ -65,6 +65,7 @@ B <- exp(-sum(selected_table$nordborg))
   # Store the results
   Bs <- c(Bs, B)
 }
+#bug
 genome_B <- data.frame(Bs, neutral_sites_list, distance)
 return(genome_B)
 }
@@ -420,27 +421,36 @@ sd(tableDFE3_end$Bs)
 tableDFE20 <- computational_B(50,0.5,0)
 tableDFE20 <- computational_B(1000,0.3,0)
 
+## constant s experiments
 
-computational_B_constant <- function(meanGamma,beta,pself) {
+
+computational_B_start_constant_s <- function(gamma,pself) {
+s <- gamma / (2*5000)
+
 # Create the nordborg table for calculations
+#using first 10kb, middle 10kb and last 10kb
+#since neutral exonic sites are .0375 prop of sites, this is 375 sites for each region
 F <- pself / (2 - pself)
 
 nordborg_calcs <- data.frame(Number = unlist(g3_elements))
 
 nordborg_calcs$Assignment <- sample(c("selected", "neutral"), size = nrow(nordborg_calcs), replace = TRUE)
-meanS <- meanGamma/(2*5000)
-s_shape <- beta
-s_rate <- s_shape/abs(meanS)
+#meanS <- meanGamma/(2*5000)
+#s_shape <- beta
+#s_rate <- s_shape/abs(meanS)
 
-nordborg_calcs$s <- meanGamma / (2*5000)
+nordborg_calcs$s <- ifelse(nordborg_calcs$Assignment == "selected", 
+  s, 0)
 
 neutral_sites <- subset(nordborg_calcs, Assignment == "neutral")
 #center_index <- ceiling(nrow(neutral_sites) / 2)
 
 Bs <- numeric()
 neutral_sites_list <- numeric()
-for (x in seq(1,1000, by = 1)) {
-neutral_position  <- neutral_sites[sample(1:nrow(neutral_sites), 1), ]
+len <- nrow(neutral_sites)
+sites <- c(seq(1,375, by = 1))
+for (x in sites) {
+neutral_position  <- neutral_sites[x, ]
 
 neutral_sites_list <- c(neutral_sites_list, neutral_position$Number)
 selected_table <- subset(nordborg_calcs, Assignment == "selected")
@@ -448,23 +458,258 @@ selected_table <- subset(nordborg_calcs, Assignment == "selected")
 # Calculate the distance of each selected site from the neutral site
 selected_table$Distance <- abs(selected_table$Number - neutral_position$Number)
 
-ui <- 3.3e-9 *100#mut rate
-rec_rate <- 3.12*1e-8 *100 # rec rate
+ui <- 3.3e-9 * 100#mut rate
+rec_rate <- 3.12*1e-8 * 100 # rec rate
+
  
 selected_table$ti <- selected_table$s * 0.5
-selected_table$haldanesr <- 1- exp((-2*rec_rate*selected_table$Distance)/2)
 
-#selected_table$nordborg <- (ui*selected_table$ti) / (selected_table$ti + (selected_table$haldanesr*(1-F))*(1-selected_table$ti))^2
 selected_table$nordborg <- (ui*selected_table$ti) / (selected_table$ti + (rec_rate*selected_table$Distance*(1-F))*(1-selected_table$ti))^2
-#selected_table$nordborg <- (ui*selected_table$ti) / 2*(selected_table$ti + (rec_rate*selected_table$Distance*(1-F)))^2
 
 B <- exp(-sum(selected_table$nordborg))
   # Store the results
   Bs <- c(Bs, B)
 }
-genome_B <- data.frame(Bs, neutral_sites_list, distance)
+genome_B <- data.frame(Bs, neutral_sites_list)
 return(genome_B)
 }
 
-tableDFE3_const <- computational_B_constant(1000,0.3,0)
-mean(tableDFE3_const$Bs)
+
+computational_B_middle_constant_s <- function(gamma,pself) {
+s <- gamma / (2*5000)
+# Create the nordborg table for calculations
+#using first 10kb, middle 10kb and last 10kb
+#since neutral exonic sites are .0375 prop of sites, this is 375 sites for each region
+F <- pself / (2 - pself)
+
+nordborg_calcs <- data.frame(Number = unlist(g3_elements))
+
+nordborg_calcs$Assignment <- sample(c("selected", "neutral"), size = nrow(nordborg_calcs), replace = TRUE)
+#meanS <- meanGamma/(2*5000)
+#s_shape <- beta
+#s_rate <- s_shape/abs(meanS)
+
+nordborg_calcs$s <- ifelse(nordborg_calcs$Assignment == "selected", 
+  s, 0)
+
+neutral_sites <- subset(nordborg_calcs, Assignment == "neutral")
+#center_index <- ceiling(nrow(neutral_sites) / 2)
+
+Bs <- numeric()
+neutral_sites_list <- numeric()
+len <- nrow(neutral_sites)
+sites <- c(seq((len/2-187),(len/2+188), by = 1))
+for (x in sites) {
+neutral_position  <- neutral_sites[x, ]
+
+neutral_sites_list <- c(neutral_sites_list, neutral_position$Number)
+selected_table <- subset(nordborg_calcs, Assignment == "selected")
+
+# Calculate the distance of each selected site from the neutral site
+selected_table$Distance <- abs(selected_table$Number - neutral_position$Number)
+
+ui <- 3.3e-9 * 100#mut rate
+rec_rate <- 3.12*1e-8 * 100 # rec rate
+
+ 
+selected_table$ti <- selected_table$s * 0.5
+
+selected_table$nordborg <- (ui*selected_table$ti) / (selected_table$ti + (rec_rate*selected_table$Distance*(1-F))*(1-selected_table$ti))^2
+
+B <- exp(-sum(selected_table$nordborg))
+  # Store the results
+  Bs <- c(Bs, B)
+}
+genome_B <- data.frame(Bs, neutral_sites_list)
+return(genome_B)
+}
+
+
+computational_B_end_constant_s <- function(gamma,pself) {
+s <- gamma / (2*5000)
+# Create the nordborg table for calculations
+#using first 10kb, middle 10kb and last 10kb
+#since neutral exonic sites are .0375 prop of sites, this is 375 sites for each region
+F <- pself / (2 - pself)
+
+nordborg_calcs <- data.frame(Number = unlist(g3_elements))
+
+nordborg_calcs$Assignment <- sample(c("selected", "neutral"), size = nrow(nordborg_calcs), replace = TRUE)
+#meanS <- meanGamma/(2*5000)
+#s_shape <- beta
+#s_rate <- s_shape/abs(meanS)
+
+nordborg_calcs$s <- ifelse(nordborg_calcs$Assignment == "selected", 
+  s, 0)
+
+neutral_sites <- subset(nordborg_calcs, Assignment == "neutral")
+#center_index <- ceiling(nrow(neutral_sites) / 2)
+
+Bs <- numeric()
+neutral_sites_list <- numeric()
+len <- nrow(neutral_sites)
+sites <- c(seq(1,375, by = 1), seq((len/2-187),(len/2+188), by = 1), seq(len-375,len, by = 1))
+for (x in sites) {
+neutral_position  <- neutral_sites[x, ]
+
+neutral_sites_list <- c(neutral_sites_list, neutral_position$Number)
+selected_table <- subset(nordborg_calcs, Assignment == "selected")
+
+# Calculate the distance of each selected site from the neutral site
+selected_table$Distance <- abs(selected_table$Number - neutral_position$Number)
+
+ui <- 3.3e-9 * 100#mut rate
+rec_rate <- 3.12*1e-8 * 100 # rec rate
+
+ 
+selected_table$ti <- selected_table$s * 0.5
+
+selected_table$nordborg <- (ui*selected_table$ti) / (selected_table$ti + (rec_rate*selected_table$Distance*(1-F))*(1-selected_table$ti))^2
+
+B <- exp(-sum(selected_table$nordborg))
+  # Store the results
+  Bs <- c(Bs, B)
+}
+genome_B <- data.frame(Bs, neutral_sites_list)
+return(genome_B)
+}
+
+#dfe2
+start <- computational_B_start(50,0.5,0)
+middle <- computational_B_middle(50,0.5,0)
+end <- computational_B_end(50,0.5,0)
+
+constant_s_start <- computational_B_start_constant_s(50,0)
+constant_s_middle <- computational_B_start_constant_s(50,0)
+constant_s_end <- computational_B_start_constant_s(50,0)
+
+mean(start$Bs)
+sd(start$Bs)
+mean(constant_s_start$Bs)
+sd(constant_s_start$Bs)
+
+mean(middle$Bs)
+sd(middle$Bs)
+mean(constant_s_middle$Bs)
+sd(constant_s_middle$Bs)
+
+mean(end$Bs)
+sd(end$Bs)
+mean(constant_s_end$Bs)
+sd(constant_s_end$Bs)
+
+mean(start$Bs)
+mean(middle$Bs)
+mean(end$Bs)
+
+mean(constant_s_start$Bs)
+mean(constant_s_middle$Bs)
+mean(constant_s_end$Bs)
+
+computational_B_middle_dist <- function(gamma,pself) {
+s <- gamma / (2*5000)
+# Create the nordborg table for calculations
+#using first 10kb, middle 10kb and last 10kb
+#since neutral exonic sites are .0375 prop of sites, this is 375 sites for each region
+F <- pself / (2 - pself)
+
+nordborg_calcs <- data.frame(Number = unlist(g3_elements))
+
+nordborg_calcs$Assignment <- sample(c("selected", "neutral"), size = nrow(nordborg_calcs), replace = TRUE)
+#meanS <- meanGamma/(2*5000)
+#s_shape <- beta
+#s_rate <- s_shape/abs(meanS)
+
+nordborg_calcs$s <- ifelse(nordborg_calcs$Assignment == "selected", 
+  s, 0)
+
+neutral_sites <- subset(nordborg_calcs, Assignment == "neutral")
+#center_index <- ceiling(nrow(neutral_sites) / 2)
+
+Bs <- numeric()
+dist <- numeric()
+neutral_sites_list <- numeric()
+len <- nrow(neutral_sites)
+sites <- c(seq((len/2-187),(len/2+188), by = 1))
+for (x in sites) {
+neutral_position  <- neutral_sites[x, ]
+
+neutral_sites_list <- c(neutral_sites_list, neutral_position$Number)
+selected_table <- subset(nordborg_calcs, Assignment == "selected")
+
+# Calculate the distance of each selected site from the neutral site
+selected_table$Distance <- abs(selected_table$Number - neutral_position$Number)
+
+ui <- 3.3e-9 * 100#mut rate
+rec_rate <- 3.12*1e-8 * 100 # rec rate
+
+ 
+selected_table$ti <- selected_table$s * 0.5
+
+selected_table$nordborg <- (ui*selected_table$ti) / (selected_table$ti + (rec_rate*selected_table$Distance*(1-F))*(1-selected_table$ti))^2
+
+B <- exp(-sum(selected_table$nordborg))
+  # Store the results
+  Bs <- c(Bs, B)
+  dist <- c(dist, mean(selected_table$Distance))
+}
+genome_B <- data.frame(Bs, neutral_sites_list,dist)
+return(genome_B)
+}
+
+
+computational_B_end_constant_s_dist <- function(gamma,pself) {
+s <- gamma / (2*5000)
+# Create the nordborg table for calculations
+#using first 10kb, middle 10kb and last 10kb
+#since neutral exonic sites are .0375 prop of sites, this is 375 sites for each region
+F <- pself / (2 - pself)
+
+nordborg_calcs <- data.frame(Number = unlist(g3_elements))
+
+nordborg_calcs$Assignment <- sample(c("selected", "neutral"), size = nrow(nordborg_calcs), replace = TRUE)
+#meanS <- meanGamma/(2*5000)
+#s_shape <- beta
+#s_rate <- s_shape/abs(meanS)
+
+nordborg_calcs$s <- ifelse(nordborg_calcs$Assignment == "selected", 
+  s, 0)
+
+neutral_sites <- subset(nordborg_calcs, Assignment == "neutral")
+#center_index <- ceiling(nrow(neutral_sites) / 2)
+dist <- numeric()
+Bs <- numeric()
+neutral_sites_list <- numeric()
+len <- nrow(neutral_sites)
+sites <- c(seq(1,375, by = 1), seq((len/2-187),(len/2+188), by = 1), seq(len-375,len, by = 1))
+for (x in sites) {
+neutral_position  <- neutral_sites[x, ]
+
+neutral_sites_list <- c(neutral_sites_list, neutral_position$Number)
+selected_table <- subset(nordborg_calcs, Assignment == "selected")
+
+# Calculate the distance of each selected site from the neutral site
+selected_table$Distance <- abs(selected_table$Number - neutral_position$Number)
+
+ui <- 3.3e-9 * 100#mut rate
+rec_rate <- 3.12*1e-8 * 100 # rec rate
+
+ 
+selected_table$ti <- selected_table$s * 0.5
+
+selected_table$nordborg <- (ui*selected_table$ti) / (selected_table$ti + (rec_rate*selected_table$Distance*(1-F))*(1-selected_table$ti))^2
+
+B <- exp(-sum(selected_table$nordborg))
+  # Store the results
+  Bs <- c(Bs, B)
+  dist <- c(dist, mean(selected_table$Distance))
+}
+genome_B <- data.frame(Bs, neutral_sites_list,dist)
+return(genome_B)
+}
+
+constant_s_middle_dist <- computational_B_middle_dist(50,0)
+mean(constant_s_middle_dist$dist)
+constant_s_end_dist <- computational_B_end_constant_s_dist(50,0)
+mean(constant_s_end_dist$dist)
+
