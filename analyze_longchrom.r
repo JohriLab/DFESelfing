@@ -694,48 +694,70 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(!grepl("F_adjusted", selfing)) %>%
   filter(selfing_class != "80% Selfing") %>%
   filter(selfing_class != "90% Selfing") %>%
-  filter(selfing_class != "95% Selfing") 
+  filter(selfing_class != "95% Selfing") %>%
+    mutate(selfing = recode(selfing,
+     'Dominance_adjusted_50' = 'Simulated DFE',
+     '0' = 'DFE-alpha, 3000 gene chromosome', 
+     '0_grapes' = 'GRAPES, 3000 gene chromosome',
+      '50' = 'DFE-alpha, 3000 gene chromosome', 
+     '50_grapes' = 'GRAPES, 3000 gene chromosome',
+     '99' = 'DFE-alpha, 3000 gene chromosome', 
+     '99_grapes' = 'GRAPES, 3000 gene chromosome'))
 
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
+    levels = c("truth", "DFE-alpha","GRAPES", "F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
         "F_adjusted_99", "true99", 99, "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes, 3000 gene chromosome", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
   scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
-  theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
 
-largechr_DFE <- combo_plot %>% filter(selfing_class=="99% Selfing") %>% 
-  mutate(selfing_class = "99% Selfing, 3000 gene chromosome") %>%
+largechr_DFE <- combo_plot %>% #%>% filter(selfing_class=="99% Selfing") %>% 
+  #mutate(selfing_class = "99% Selfing, 3000 gene chromosome") %>%
   mutate(selfing = case_when(
         selfing == 'truth'  ~ 'Simulated DFE',
         TRUE ~ selfing))
-original_DFE <- read.csv(file = "/nas/longleaf/home/adaigle/DFESelfing/99selfingbasic.csv")
-original_DFE <- original_DFE[2:8] %>% mutate(selfing_class = "99% Selfing, 500 gene chromosome")
+original_DFE <- read.csv(file = "/nas/longleaf/home/adaigle/DFESelfing/05099selfingbasic.csv")
+original_DFE <- original_DFE[2:8] %>% 
+  filter(selfing_class!="truth") %>%
+#mutate(selfing_class = "99% Selfing, 500 gene chromosome") %>%
+    mutate(selfing = recode(selfing,
+     '0' = 'DFE-alpha, 500 gene chromosome', 
+     '0_grapes' = 'GRAPES, 500 gene chromosome',
+      '50' = 'DFE-alpha, 500 gene chromosome', 
+     '50_grapes' = 'GRAPES, 500 gene chromosome',
+     '99' = 'DFE-alpha, 500 gene chromosome', 
+     '99_grapes' = 'GRAPES, 500 gene chromosome'))
 
+comparison_plot <- rbind(original_DFE, largechr_DFE) 
 #this is a neat way to get the default ordering of facet_grid (and prob any plotting in ggplot)
 #before getting inside the actual function. 
 #good for things I'm plotting in the same order many times. 
-comparison_plot$selfing_class <- factor(comparison_plot$selfing_class,
-                                        levels = c("99% Selfing, 500 gene chromosome", "99% Selfing, 3000 gene chromosome"))
+#comparison_plot$selfing_class <- factor(comparison_plot$selfing_class,
+ #                                       levels = c("99% Selfing, 500 gene chromosome", "99% Selfing, 3000 gene chromosome"))
 
-ggplot(comparison_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "Simulated DFE", "F_adjusted_0", "true0", 0, "0_grapes",
-        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
-        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
-        "F_adjusted_99", "true99", 99, "99_grapes")))) +
+figure5 <- ggplot(comparison_plot, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "Simulated DFE", "DFE-alpha, 500 gene chromosome", "GRAPES, 500 gene chromosome", "DFE-alpha, 3000 gene chromosome", "GRAPES, 3000 gene chromosome")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes, 3000 gene chromosome", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
-  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
-  theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
+  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "#a020f0","#df948f", "#c69cdb"),6))) + 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15), 
+  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=3, byrow=TRUE)) 
+  
+
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure5.svg", plot = figure5, width = 8.5, height = 8.5, dpi = 600)
+
+

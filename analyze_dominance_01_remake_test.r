@@ -82,7 +82,7 @@ dfealpha_raw_results_wtruth <- dfealpha_raw_results %>%
     mutate(true_shape = unlist(true_betas[DFE]))
 
 #now i run the class generator function on all outputs
-dfealpha_raw_results_wclasses <- dfealpha_raw_results_wtruth %>%
+dfealpha_raw_results_wclasses <- dfealpha_raw_results_wtruth %>% 
   mutate(output = pmap(list(gamma, b, Nw), DFE_proportions_dfe_alpha)) %>%
   unnest_wider(output) %>%
   rename(z0 = f0) %>%  #had to rename columns bc i rerun the function
@@ -223,13 +223,14 @@ grapes_gammazero_summary <- grapes_raw_results_wclasses %>%
     group_by(selfing, DFE) %>%
     summarize(across(where(is.numeric), list(avg = mean, sd = sd)))
 
+#MODIFYING TRUTH HERE TO MAKE N=NSELF
 grapes_gammazero_simple_summary <- 
     grapes_gammazero_summary[
         c('DFE','selfing','t0_avg','t1_avg', 't2_avg', 't3_avg',
             't0_sd','t1_sd', 't2_sd', 't3_sd')] %>%
     group_by(DFE) %>%
     mutate(true_mean = unlist(true_gammas[DFE])) %>%
-    
+    mutate(true_mean = true_mean / ( 1 + ((0.01*as.numeric(selfing))/(2-(0.01*as.numeric(selfing)))) )) %>%
     mutate(true_shape = unlist(true_betas[DFE])) %>% 
     mutate(output = pmap(list(true_mean, true_shape, 100), DFE_proportions_dfe_alpha)) %>%
     unnest_wider(output) 
@@ -269,7 +270,8 @@ find_h <- function(selfing,h) {
 
 dataframe_of_truth3 <- dataframe_of_truth2 %>%
   mutate(adjusted_gamma = B * true_mean) %>%
-  mutate(dominance_gamma = true_mean * find_h(as.numeric(selfing), 0.1)) %>% # need selfing % and dominance
+  mutate(dominance_gamma = 
+    true_mean * find_h(as.numeric(selfing) * (1/(1+(0.01*as.numeric(selfing)/(2-0.01*as.numeric(selfing))))), 0.1)) %>% # need selfing % and dominance
   mutate(matchname = paste0(DFE,"output",output)) %>%
   filter(!str_detect(fullpath, "pos")) %>%
   group_by(DFE,selfing,matchname) %>%
@@ -293,8 +295,8 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
   arrange(DFE) %>%
   mutate (F = (as.numeric(selfing)/100)/(2-(as.numeric(selfing)/100)),
     selfing_Ne = 5000/(1+F),
-    dfealpha_gamma = gamma * 0.5,
-    grapes_gamma = GammaZero.negGmean * -0.5,
+    dfealpha_gamma = gamma ,
+    grapes_gamma = GammaZero.negGmean,
     selfing_B = selfing_Ne / 5000,
     F_adjusted_gamma = selfing_B * true_mean)
     #deltaNe = selfing_Ne - empirical_Ne,
@@ -378,6 +380,9 @@ DFE_proportions_truth <- function(B, meanGamma,beta) {
     return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
 }
 
+
+
+
 dataframe_of_truth <- dataframe_of_truth %>% filter(!str_detect(row_names, "pos")) %>%
 mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
     unnest_wider(output) 
@@ -435,9 +440,15 @@ df_true_tidy <- gather(grapes_gammazero_simple_summary,
         z1 = 'f1', 
         z2 = 'f2', 
         z3 = 'f3'
-    ))  %>% 
-    select(1,13:14) %>% distinct() %>%
-    mutate(selfing = "True0")
+    )) %>%
+    mutate(selfing = recode(selfing,
+        '0' = 'true0', 
+        '50' = 'true50', 
+        '99' = 'true99' 
+    )) %>% 
+    select(1:2,13:14) %>% distinct() 
+    #%>%
+    #mutate(selfing = "True0")
 
 #grapes_for_plotting <- bind_rows(df_tidy, df_true_tidy) %>% 
 #  mutate(generation = recode(generation,
@@ -456,7 +467,7 @@ df_true_tidy <- gather(grapes_gammazero_simple_summary,
 #    grapes_for_plotting$generation), "sd", "value")  
 
 grapes_for_plotting <- bind_rows(df_true_tidy,df_tidy) %>%
-    select(1:8) %>%
+    select(1:9) %>%
     melt() %>% 
     mutate(value = ifelse(is.na(value), 0, value)) %>% 
     #mutate(generation = recode(generation,
@@ -494,7 +505,7 @@ voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE"
 #  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
 #  scale_fill_manual(values = c("black", "red","blue","purple", "goldenrod4", "hotpink", "green"))
 
-  
+
 dfealpha_for_plotting <- bind_rows(df_true_tidy,dfealpha_tidy) %>%
     select(1:4,32,34,36,38) %>%
     melt() %>% 
@@ -509,7 +520,7 @@ dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$vari
 voodoo <- pivot_wider(dfealpha_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")
 # Define the order of the selfing levels
 #selfing_order <- c("True0", 0, 50, 80, 90, 95, 100)
-selfing_order <- c("True0", 0, 50, 80, 90, 95, 100)
+selfing_order <- c("true0", "true50", "true99", 0, 50, 80, 90, 95, 100)
 
 # Create the grouped bar chart with custom selfing order
 ggplot(voodoo, aes(x = generation, y = value, fill = factor(selfing, levels = c("True0", "0", "50", "80", "90", "95", "100")))) +
@@ -743,7 +754,8 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(!grepl("truth", selfing)) %>%
   filter(selfing_class != "80% Selfing") %>%
   filter(selfing_class != "90% Selfing") %>%
-  filter(selfing_class != "95% Selfing") 
+  filter(selfing_class != "95% Selfing") %>% 
+mutate(value = unlist(value)) %>% mutate(sd = unlist(sd))
 
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("truth", "Dominance_adjusted_0", "Dominance_adjusted_50", "Dominance_adjusted_99" , "F_adjusted_0", "true0", 0, "0_grapes",

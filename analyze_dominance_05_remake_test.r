@@ -137,8 +137,8 @@ grapes_raw_results <- tibble(
     #filter(matchname != "DFE1output2"|selfing != 99) %>%
     #filter(matchname != "DFE2output2"|selfing != 99) %>%
     #filter(matchname != "DFE3output2"|selfing != 99) %>%
-    mutate(data = lapply(fullpath,read.csv)) %>%
-    filter(selfing==c(0,50,99))
+    mutate(data = lapply(fullpath,read.csv)) #%>%
+    #filter(selfing==c(0,50,99))
 #now I want to clean this up because it has too much going on
 # I will keep just the gammazero row in each DF
 grapes_gammazero_raw_results <- grapes_raw_results %>% 

@@ -675,26 +675,44 @@ ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing,
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values = c("#404040", rep(c("purple"),6)))+ 
-  theme(legend.position="none")
+  theme(legend.position="none") 
 
 
 # combo dfealpha and grapes plot:
 combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(!grepl("true", selfing)) %>%
   filter(!grepl("F_adjusted", selfing)) %>% 
-  mutate(across(selfing_class, factor, levels = c("0.5x", "0.1x", "0.05x", "0.01x", "0.005x", "0.001x")))
-ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "F_adjusted_0", "true0", 0, "0_grapes",
+  mutate(across(selfing_class, factor, levels = c("0.5x", "0.1x", "0.05x", "0.01x", "0.005x", "0.001x"))) %>%
+    mutate(selfing = recode(selfing,
+     'Dominance_adjusted_50' = 'Simulated DFE',
+     '0' = 'DFE-alpha', 
+     '0_grapes' = 'GRAPES',
+      '50' = 'DFE-alpha', 
+     '50_grapes' = 'GRAPES',
+     '80' = 'DFE-alpha', 
+     '80_grapes' = 'GRAPES',
+     '90' = 'DFE-alpha', 
+     '90_grapes' = 'GRAPES',
+     '95' = 'DFE-alpha', 
+     '95_grapes' = 'GRAPES',
+     '99' = 'DFE-alpha', 
+     '99_grapes' = 'GRAPES'))
+figure4 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("truth", "DFE-alpha","GRAPES","F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
         "F_adjusted_99", "true99", 99, "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes, no selfing, low recombination", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), vars(selfing_class)) +
   #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
-  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
-  theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
+  scale_fill_manual(values = c("#404040", rep(c("#70F020", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
+  axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
+  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE))+
+  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
 
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure4.svg", plot = figure4, width = 8.5, height = 7.5, dpi = 600)

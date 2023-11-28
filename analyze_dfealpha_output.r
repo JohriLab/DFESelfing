@@ -271,7 +271,7 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
     newNE = 5000 - deltaNe,
     newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
 
-
+write.csv(prediction_accuracy_table, file="/nas/longleaf/home/adaigle/DFESelfing/pylibseq/gammabeta.csv", quote=F)
 
 ## adding adjusted truths to plots
 # will just append to end now so I don't break things
@@ -510,17 +510,21 @@ dfealpha_rainbow_plot <- voodoo %>%
   #filter(grepl("truth", selfing))
 selfing_order <- c("Simulated DFE", 0, 50, 80, 90, 95, 99)
 
+
+
 dfealpha_rainbow <- ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = selfing_order))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   facet_wrap(~ DFE, nrow = 1) +
-  labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(title = "", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) + 
   scale_fill_manual(values = c("#404040", hue_pal()(6))) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), 
+    axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
+    plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
 
 
 # Split data frame into "truth" and "non-truth" data frames
@@ -645,19 +649,22 @@ grapes_rainbow <- ggplot(grapes_rainbow_plot, aes(x = generation, y = value, fil
     levels = selfing_order))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   facet_wrap(~ DFE, nrow = 1) +
-  labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(title = "", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) + 
   scale_fill_manual(values = c("#404040", hue_pal()(6))) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), 
+    axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
+    plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
 
 figure1 <- ggarrange(dfealpha_rainbow, grapes_rainbow,
                     labels = c("A", "B"),
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
-                    common.legend = TRUE, legend = "right")
+                    common.legend = TRUE, legend = "bottom")
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure1.pdf", plot = figure1, width = 8.5, height = 8.5, dpi = 600)
 
 voodoo_grapes2 <- voodoo_grapes %>%
     mutate(selfing = case_when(
@@ -710,7 +717,7 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   #filter(selfing_class != "50% Selfing") %>%
   #filter(selfing_class != "truth") %>%
   #filter(selfing_class != "Simulated DFE")
-#write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/99selfingbasic.csv")
+#write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/05099selfingbasic.csv")
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("Simulated DFE", "F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",

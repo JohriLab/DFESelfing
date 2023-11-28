@@ -10,7 +10,7 @@ selfing_levels <- c("0", "50", "99")
 
 for(selfing_level in selfing_levels) {
 print(selfing_level)
-main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/nolinkage/DFE2_50k_outputs"
+main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/nolinkage_h025/final_50k_outputs"
 path_to_files <- paste0(main_dir, "/SFS/")
 path_to_DFESelfing <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_input_", selfing_level, "/")
 path_to_dfe_alpha_output <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_output_", selfing_level, "/")
@@ -84,9 +84,9 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 }
 
 
-#DFE_list <- c("DFE1", "DFE2", "DFE3")
+DFE_list <- c("DFE1", "DFE2", "DFE3")
 #DFE_list <- c("DFE2", "DFE3")
-DFE_list <- c("DFE2")
+#DFE_list <- c("DFE2")
 
 #this assumes all files in SFS folder have same number and name of replicates
 #if this assumption is violated the code will need to get more complex

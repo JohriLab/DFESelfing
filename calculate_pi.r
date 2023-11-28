@@ -158,4 +158,3 @@ tidy_summary_table <- tibble(
     empirical_Ne = B*5000
 ) %>% 
 mutate(data = NULL)#don't need the big dataframes anymore
-

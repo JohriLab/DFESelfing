@@ -287,7 +287,12 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
     newNE = 5000 - deltaNe,
     newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
 
-
+quick_summary <- prediction_accuracy_table %>% ungroup() %>%
+  select(DFE,selfing,dominance_gamma, dfealpha_gamma, grapes_gamma, b, GammaZero.negGshape) %>%
+  #filter(selfing == 0) %>% 
+  group_by(DFE,selfing) %>%
+  summarize(across(where(is.numeric), list(avg = mean))) 
+#write.csv(quick_summary, file="quick_summary_h01_gammas.csv")
 
 ## adding adjusted truths to plots
 # will just append to end now so I don't break things

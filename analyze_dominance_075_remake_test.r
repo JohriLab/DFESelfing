@@ -269,7 +269,7 @@ find_h <- function(selfing,h) {
 
 dataframe_of_truth3 <- dataframe_of_truth2 %>%
   mutate(adjusted_gamma = B * true_mean) %>%
-  mutate(dominance_gamma = true_mean * find_h(as.numeric(selfing), 0.75)) %>% # need selfing % and dominance
+  mutate(dominance_gamma = true_mean * find_h(as.numeric(selfing)* (1/(1+(0.01*as.numeric(selfing)/(2-0.01*as.numeric(selfing))))), 0.75)) %>% # need selfing % and dominance
   mutate(matchname = paste0(DFE,"output",output)) %>%
   filter(!str_detect(fullpath, "pos")) %>%
   group_by(DFE,selfing,matchname) %>%
@@ -293,8 +293,8 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
   arrange(DFE) %>%
   mutate (F = (as.numeric(selfing)/100)/(2-(as.numeric(selfing)/100)),
     selfing_Ne = 5000/(1+F),
-    dfealpha_gamma = gamma * 0.5,
-    grapes_gamma = GammaZero.negGmean * -0.5,
+    dfealpha_gamma = gamma,
+    grapes_gamma = GammaZero.negGmean,
     selfing_B = selfing_Ne / 5000,
     F_adjusted_gamma = selfing_B * true_mean)
     #deltaNe = selfing_Ne - empirical_Ne,
