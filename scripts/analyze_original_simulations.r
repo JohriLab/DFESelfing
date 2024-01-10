@@ -1,12 +1,15 @@
 rm(list=ls())
 library(RColorBrewer)
 library(tidyverse)
-source("/nas/longleaf/home/adaigle/DFESelfing/calculate_pi.r")
 library(reshape2)
 library(scales)
 library(ggpubr)
 
-figures_dir <- "/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/"
+base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
+
+source(paste0(base_dir, "scripts/calculate_pi.r"))
+
+figures_dir <- paste0(base_dir, "figures_for_publication/")
 dfe_results_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/original_simulations/dfe_results/"
 dfealpha_dir <- paste0(dfe_results_dir, "dfealpha/")
 dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
@@ -231,15 +234,15 @@ grapes_gammazero_simple_summary <-
 # I am making an extra df for true values to make things less confusing
 # I will Have a mean and shape column, then run program to get classes, then make into a tidy df for easy plotting
 
-dataframe_of_truth <- #must run calculate_pi.r
-summary_table %>% 
-    mutate(row_names = row.names(summary_table),
-    DFE = str_extract(row_names, "(DFE)\\d+"),
-    selfing = str_extract(row_names, "(?<=selfing)\\d+"),) %>% 
-    tibble() %>%
-    group_by(DFE) %>%
-    mutate(true_mean = unlist(true_gammas[DFE])) %>%
-    mutate(true_shape = unlist(true_betas[DFE]))
+#dataframe_of_truth <- #must run calculate_pi.r
+#summary_table %>% 
+#    mutate(row_names = row.names(summary_table),
+#    DFE = str_extract(row_names, "(DFE)\\d+"),
+#    selfing = str_extract(row_names, "(?<=selfing)\\d+"),) %>% 
+#    tibble() %>%
+#    group_by(DFE) %>%
+#    mutate(true_mean = unlist(true_gammas[DFE])) %>%
+#    mutate(true_shape = unlist(true_betas[DFE]))
 dataframe_of_truth2 <-
   tidy_summary_table %>%
     group_by(DFE) %>%
@@ -274,7 +277,7 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
     newNE = 5000 - deltaNe,
     newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
 
-write.csv(prediction_accuracy_table, file="/nas/longleaf/home/adaigle/DFESelfing/pylibseq/gammabeta.csv", quote=F)
+#write.csv(prediction_accuracy_table, file="/nas/longleaf/home/adaigle/DFESelfing/pylibseq/gammabeta.csv", quote=F)
 
 ## adding adjusted truths to plots
 # will just append to end now so I don't break things
@@ -329,9 +332,9 @@ DFE_proportions_truth <- function(B, meanGamma,beta) {
     return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
 }
 
-dataframe_of_truth <- dataframe_of_truth %>% filter(!str_detect(row_names, "pos")) %>%
-mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
-    unnest_wider(output) 
+#dataframe_of_truth <- dataframe_of_truth %>% filter(!str_detect(row_names, "pos")) %>%
+#mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+#    unnest_wider(output) 
 
 dataframe_of_truth2_nopos <- dataframe_of_truth2 %>% filter(!str_detect(fullpath, "pos")) %>%
 mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%

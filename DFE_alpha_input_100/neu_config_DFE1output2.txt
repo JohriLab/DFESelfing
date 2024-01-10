@@ -1,9 +1,0 @@
-data_path_1 /nas/longleaf/home/adaigle/adaigle/johri_elegans/data
-site_class 0
-fold 1
-epochs 2
-search_n2 1
-t2_variable 1
-t2 50
-sfs_input_file /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_input_100/DFE1output2.txt
-est_dfe_results_dir /nas/longleaf/home/adaigle/DFESelfing/DFE_alpha_output_100/DFE1output2.txt_neutral
