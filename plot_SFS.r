@@ -668,21 +668,33 @@ mutate(
     )
   )
 
-hdel05_unlinked_figure <- ggplot(plotting_df_h05_unlinked, aes(x = entry_number, y = prop, fill = factor(SFS))) +
+plotting_df_h05_unlinked_new <- plotting_df_h05_unlinked %>% 
+  filter(selfing != 99 | SFS != "neutral") %>% filter(selfing != 50 | SFS != "neutral") %>%
+    mutate(selfing = case_when(
+      selfing == 0 & SFS == "neutral" ~ "neutral",
+      TRUE ~ as.character(selfing)))
+
+
+# Reorder the 'selfing' column in your data frame
+plotting_df_h05_unlinked_new$selfing <- factor(plotting_df_h05_unlinked_new$selfing, levels = c("neutral", "0", "50", "99"))
+
+# Plot with reordered factor levels
+hdel05_unlinked_figure <- ggplot(plotting_df_h05_unlinked_new, aes(x = entry_number, y = prop, fill = selfing)) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
   labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
-  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
-  #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
-        legend.title = element_text(size=15), legend.text = element_text(size=15)) +
-  expand_limits(y=c(0,0.7)) +
-  #important addition to make x axis more readable
+  facet_grid(rows = vars(DFE)) +
+  theme(axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), 
+        strip.text = element_text(size = 15), plot.title = element_text(size = 25), 
+        legend.title = element_text(size = 15), legend.text = element_text(size = 15),
+        legend.position = "bottom") +
+  expand_limits(y = c(0, 0.7)) +
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
-                       labels = c(1, seq(5, 9, by = 5), "11+"))
+                     labels = c(1, seq(5, 9, by = 5), "11+"))
+
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure03.svg", plot = hdel05_unlinked_figure, width = 8.5, height = 8.5, dpi = 600)
+
 
 #Combo of h=0.25 and h=0.5 unlinked figures, since they share a neutral SFS I just have to add one.
 plotting_df_h05_unlinked <- plotting_df_h05_unlinked %>% 
@@ -764,7 +776,10 @@ mutate(
     ))
 plotting_linked_dom_comparison <- 
   bind_rows(plotting_df_h05_linked,plotting_df_h025_linked) %>%
-  distinct()
+  distinct() #%>% 
+  #filter(SFS != "neutral, h=0.25") 
+
+
 
 dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
@@ -781,4 +796,6 @@ dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_numb
   expand_limits(y=c(0,0.7)) +
   #important addition to make x axis more readable
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
-                       labels = c(1, seq(5, 9, by = 5), "11+"))
+                       labels = c(1, seq(5, 9, by = 5), "11+")) +
+  guides(fill = guide_legend(nrow = 2))
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure07.svg", plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)

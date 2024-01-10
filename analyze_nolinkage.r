@@ -692,7 +692,7 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
      '99' = 'DFE-alpha', 
      '99_grapes' = 'GRAPES'))
 
-figure3 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
+sfigure04 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("truth", "DFE-alpha", "GRAPES","F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
@@ -711,4 +711,4 @@ figure3 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfi
   scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
 #combo_plot <- combo_plot %>% mutate(intergenic=500)
 #write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/intergenic_plot/int500.csv")
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure3.svg", plot = figure3, width = 8.5, height = 8.5, dpi = 600)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure04.svg", plot = sfigure04, width = 8.5, height = 8.5, dpi = 600)

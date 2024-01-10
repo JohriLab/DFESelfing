@@ -7,7 +7,7 @@ library(scales)
 library(ggpubr)
 grapes_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/low_positive/dfe_results/grapes/"
 pos_output_dirs <- paste(grapes_dir, dir(grapes_dir, pattern = "grapes"), sep = "")
-pos_output_dirs <- pos_output_dirs[grepl("grapes_folded_output", pos_output_dirs)]
+pos_output_dirs <- pos_output_dirs[grepl("grapes_output", pos_output_dirs)]
 
 selfing_nums <- c(0, 50, 80, 90, 95, 99)
 
@@ -94,7 +94,7 @@ pos_grapes_raw_results <- tibble(
     matchname = sub(".txt.csv","",name), #will be useful for comparing results later, or combining with other programs
     DFE = str_extract(matchname, "(DFE)\\d+"),
     fullpath = paste(pos_output_dirs, "/", name,sep=""),
-    selfing = str_extract(fullpath, "(?<=grapes_folded_output_)\\d+"),
+    selfing = str_extract(fullpath, "(?<=grapes_output_)\\d+"),
     data = lapply(fullpath,read.csv)
 )
 
@@ -134,7 +134,7 @@ pos_grapes_gammaexpo_raw_results_wclasses <- pos_grapes_gammaexpo_raw_results %>
   #rename( c(t0,t1,t2,t3) = c(f0,f1,f2,f3)) %>%
   #mutate(output = map2(true_mean, true_shape, DFE_proportions_grapes)) %>%
   #unnest_wider(output) 
-
+#alpha_list_v2 is with 1% of new beneficial mutations and v3 is 0.1%
 alphas <- read.table( file = "/nas/longleaf/home/adaigle/DFESelfing/alpha_list_v3.txt", header = TRUE)
 #rename selfing levels to be compatable with graph
 alphas <- alphas %>% mutate(selfing=recode(selfing, "0" = 'true_alpha_0',
@@ -360,25 +360,31 @@ posgrapesplot <- rbind(pos_voodoo_grapes2, df_truth_rep_self) %>%
   filter(!grepl("true", selfing)) %>% 
   filter(!grepl("error", selfing_class)) %>%
     mutate(selfing = recode(selfing,
-     '0_grapes' = 'GRAPES',
-     '50_grapes' = 'GRAPES',
-     '80_grapes' = 'GRAPES',
-     '90_grapes' = 'GRAPES',
-     '95_grapes' = 'GRAPES',     
-     '99_grapes' = 'GRAPES'))
-
+     '0_grapes' =  'Inferred by GRAPES',
+     '50_grapes' = 'Inferred by GRAPES',
+     '80_grapes' = 'Inferred by GRAPES',
+     '90_grapes' = 'Inferred by GRAPES',
+     '95_grapes' = 'Inferred by GRAPES',     
+     '99_grapes' = 'Inferred by GRAPES')) 
+    #mutate(selfing = recode(selfing, #sfigure09 uses GRAPES, Figure07 uses Inferred by... 
+    # '0_grapes' = 'GRAPES',
+    # '50_grapes' = 'GRAPES',
+    # '80_grapes' = 'GRAPES',
+    # '90_grapes' = 'GRAPES',
+    # '95_grapes' = 'GRAPES',     
+    # '99_grapes' = 'GRAPES'))
 
 #plot gammaexpo results
 positive_grapes_plot <- ggplot(posgrapesplot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "true0", "GRAPES", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
+    levels = c("truth", "true0", "Inferred by GRAPES", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  labs(x = "", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values = c("#404040", rep(c("purple"),6))) + 
   theme(axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.text.x=element_text(size=15), axis.title.y=element_text(size=20), strip.text = element_text(size=15),
+  axis.title.x=element_text(size=20),axis.text.x=element_text(size=15), axis.title.y=element_text(size=20), strip.text = element_text(size=12),
   plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE))+
   scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
@@ -444,17 +450,17 @@ alphaplot <- grapes_gammaexpo_summary %>%
 alpha_order <- c('True alpha, 0% Selfing', 'Estimated alpha, 0% Selfing', 
   'True alpha, 50% Selfing', 'Estimated alpha, 50% Selfing', 
   'True alpha, 99% Selfing', 'Estimated alpha, 99% Selfing')
-positive_grapes_plot_alpha <- ggplot(alphaplot, aes(x=factor(truth_pred, levels=c("Truth", "Prediction")),y = alpha_avg, fill = factor(truth_pred, levels=c("Truth", "Prediction")))) +
+positive_grapes_plot_alpha <- ggplot(alphaplot, aes(x=factor(truth_pred, levels=c("Truth", 'Inferred by GRAPES', "Prediction")),y = alpha_avg, fill = factor(truth_pred, levels=c("Truth", "Prediction")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   geom_errorbar(aes(ymin = alpha_avg - alpha_sd,
                     ymax = alpha_avg + alpha_sd),
                 position = position_dodge(width = 0.9), width = 0.2) +
-  labs(x = "DFE", y = "alpha", fill = "") + 
+  labs(x = "", y = expression(alpha), fill = "") + 
   scale_fill_manual(values = c(rep(c("#404040", "purple"),6))) + 
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   expand_limits(y=c(0,1)) +
   theme(axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.text.x=element_text(size=9), axis.title.y=element_text(size=20), strip.text = element_text(size=15),
+  axis.title.x=element_text(size=20),axis.text.x=element_blank(), axis.title.y=element_text(size=20), strip.text = element_text(size=12),
   plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE))
 
@@ -463,17 +469,17 @@ figure7 <- ggarrange(positive_grapes_plot, positive_grapes_plot_alpha,
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure7.svg", plot = figure7, width = 8.5, height = 8.5, dpi = 600)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure7.tiff", plot = figure7, width = 8.5, height = 10, dpi = 600)
 
 
 
 dfealpha_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/low_positive/dfe_results/dfealpha/"
-dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_autofold_output"), sep = ""),
+dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
     "/", dir(
-    paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_autofold_output"), sep = ""), pattern = "selected")
+    paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""), pattern = "selected")
     , sep = "") 
     
-#dfealpha_output_dirs <- dfealpha_output_dirs[!grepl("DFE_alpha_autofold_output_50/DFE1", dfealpha_output_dirs)]
+#dfealpha_output_dirs <- dfealpha_output_dirs[!grepl("DFE_alpha_output_50/DFE1", dfealpha_output_dirs)]
 #dfealpha_output_dirs <- dfealpha_output_dirs[!grepl("99", dfealpha_output_dirs) | !grepl("output2", dfealpha_output_dirs)]
 
 #table of results with columns signifying selfing%, DFE, and output
@@ -481,7 +487,7 @@ dfealpha_colnames <- as.data.frame(c("N1", "N2", "t2", "Nw", "b", "Es", "f0","L"
 dfealpha_raw_results <- tibble(
     name = list.files(path = dfealpha_output_dirs, pattern = "est_dfe.out"),
     fullpath = paste(dfealpha_output_dirs, "/est_dfe.out",sep=""),
-    selfing = str_extract(fullpath, "(?<=DFE_alpha_autofold_output_)\\d+") %>% if_else(is.na(.), "0", .), #0's were empty
+    selfing = str_extract(fullpath, "(?<=DFE_alpha_output_)\\d+") %>% if_else(is.na(.), "0", .), #0's were empty
     matchname = str_extract(fullpath, "(DFE)\\d+(output)\\d"), #will be useful for comparing results later, or combining with other programs
     DFE = str_extract(matchname, "(DFE)\\d+"),
     data = lapply(fullpath, function(x) 
@@ -666,7 +672,7 @@ voodoo4 <- voodoo3 %>%
 comboplot <- ggplot(rbind(voodoo4, posgrapesplot), aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("truth", "DFE-alpha", "GRAPES")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  labs(title = "DFEalpha", x = "", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
@@ -677,8 +683,9 @@ comboplot <- ggplot(rbind(voodoo4, posgrapesplot), aes(x = generation, y = value
   guides(fill=guide_legend(nrow=1, byrow=TRUE))+
   scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
   
-ggarrange(comboplot, positive_grapes_plot_alpha,
+sfigure09 <- ggarrange(comboplot, positive_grapes_plot_alpha,
                     labels = c("A", "B"),
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
-                    common.legend = TRUE, legend = "right")
+                    common.legend = TRUE, legend = "bottom")
+#ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure09.svg", plot = sfigure09, width = 8.5, height = 10, dpi = 600)

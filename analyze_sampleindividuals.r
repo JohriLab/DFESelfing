@@ -3,6 +3,7 @@ library(RColorBrewer)
 library(tidyverse)
 source("/nas/longleaf/home/adaigle/DFESelfing/calculate_pi.r")
 library(reshape2)
+library(ggpubr)
 
 dfealpha_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/sample_individuals/dfe_results/dfealpha/"
 dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
@@ -503,7 +504,7 @@ dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$vari
 voodoo <- pivot_wider(dfealpha_for_plotting, 
   id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value") %>%
 mutate(selfing = case_when(
-        selfing == 'True0'  ~ 'truth', 
+        selfing == 'True0'  ~ 'Simulated DFE', 
         selfing == 'true0_recalc' ~ 'true0',
         selfing == '100' ~ '99',
         TRUE ~ selfing 
@@ -516,7 +517,7 @@ mutate(selfing = case_when(
 dfealpha_rainbow_plot <- voodoo %>% 
   filter(!grepl("F_adjusted|true", selfing)) 
   #filter(grepl("truth", selfing))
-selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+selfing_order <- c("Simulated DFE", 0, 50, 80, 90, 95, 99)
 
 ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = selfing_order))) +
@@ -538,8 +539,8 @@ ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value, fill = factor(selfi
 #
 
 # Split data frame into "truth" and "non-truth" data frames
-voodoo2_truth <- voodoo %>% filter(grepl("truth", selfing))
-voodoo2_not_truth <- voodoo %>% filter(!grepl("truth", selfing))
+voodoo2_truth <- voodoo %>% filter(grepl("Simulated DFE", selfing))
+voodoo2_not_truth <- voodoo %>% filter(!grepl("Simulated DFE", selfing))
 
 # Replicate "truth" data frame
 df_truth_rep <- voodoo2_truth %>% slice(rep(1:n(), each = 6))
@@ -581,7 +582,7 @@ mutate(
       selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
       selfing == "99" ~ "99% Selfing",
       selfing == "F_adjusted_99" ~ "99% Selfing",
-      TRUE ~ "truth"
+      TRUE ~ "Simulated DFE"
     )
   )
 
@@ -589,7 +590,7 @@ voodoo3 <- bind_rows(df_truth_rep_self, voodoo3)
 simulated_truth <- voodoo3 %>%
   filter(grepl("true|F_adjusted", selfing))
 
-selfing_order <- c("truth", "F_adjusted_0", "true0", "0", "F_adjusted_50","true50", "50", "F_adjusted_80","true80", "80", "F_adjusted_90","true90", "90", "F_adjusted_95","true95", "95", "F_adjusted_99","true99", "99")
+selfing_order <- c("Simulated DFE", "F_adjusted_0", "true0", "0", "F_adjusted_50","true50", "50", "F_adjusted_80","true80", "80", "F_adjusted_90","true90", "90", "F_adjusted_95","true95", "95", "F_adjusted_99","true99", "99")
 
 ggplot(voodoo3, aes(x = generation, y = value, fill = factor(selfing, 
     levels = selfing_order))) +
@@ -613,7 +614,7 @@ grapes_for_plotting$variable <- ifelse(grepl("_sd", grapes_for_plotting$variable
 
 voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")  %>%
     mutate(selfing = case_when(
-        selfing == "True0" ~ "truth",
+        selfing == "True0" ~ "Simulated DFE",
         selfing == "true0_recalc" ~ "true0",
         TRUE ~ selfing
     ))
@@ -624,7 +625,7 @@ voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE"
 #also cleaning up names for better legend
 grapes_rainbow_plot <- voodoo_grapes %>%
   filter(!grepl("F_adjusted|true", selfing))
-selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+selfing_order <- c("Simulated DFE", 0, 50, 80, 90, 95, 99)
 
 # Create the grouped bar chart with custom selfing order
 ggplot(grapes_rainbow_plot, aes(x = generation, y = value, fill = factor(selfing, 
@@ -668,7 +669,7 @@ just_grapes_plot <- bind_rows(df_truth_rep_self, voodoo3_grapes, simulated_truth
 #filter(!grepl("F_adjusted|true", selfing))
 #grapes only plot:
 ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "F_adjusted_0", "true0", "0_grapes", "F_adjusted_50", "true50", "50_grapes", "F_adjusted_80", "true80", "80_grapes", "F_adjusted_90", "true90", "90_grapes", "F_adjusted_95", "true95", "95_grapes", "F_adjusted_99", "true99", "99_grapes")))) +
+    levels = c("Simulated DFE", "F_adjusted_0", "true0", "0_grapes", "F_adjusted_50", "true50", "50_grapes", "F_adjusted_80", "true80", "80_grapes", "F_adjusted_90", "true90", "90_grapes", "F_adjusted_95", "true95", "95_grapes", "F_adjusted_99", "true99", "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
@@ -693,12 +694,12 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
      '99_grapes' = 'GRAPES'))
 
 figure <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "DFE-alpha", "GRAPES","F_adjusted_0", "true0", 0, "0_grapes",
+    levels = c("Simulated DFE", "DFE-alpha", "GRAPES","F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
         "F_adjusted_99", "true99", 99, "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  labs(x = "", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
@@ -710,4 +711,12 @@ figure <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfin
   guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
   scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
 
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure02.svg", plot = figure, width = 8.5, height = 8.5, dpi = 600)
+
+SFS <- readRDS("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sample_individuals_sfs.rds")
+
+sfigure02 <- ggarrange(SFS, figure,
+                    labels = c("A", "B"),
+                    font.label = list(size = 24, color = "black", face = "bold", family = NULL),
+                    ncol = 1, nrow = 2,
+                    common.legend = F, legend = "bottom")
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure02.svg", plot = sfigure02, width = 8.5, height = 10, dpi = 600)
