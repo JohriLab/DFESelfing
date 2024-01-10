@@ -301,8 +301,8 @@ figure3 <- ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = fa
   #important addition to make x axis more readable
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+"))
-                       
-ggsave(paste0(base_dir, "figure3.svg"), plot = figure3, width = 8.5, height = 7, dpi = 600)
+
+ggsave(paste0(figures_dir, "figure3.svg"), plot = figure3, width = 8.5, height = 7, dpi = 600)
 
 #plotting an empirical C. elegans DFE from Gilbert et al. Data downloaded from https://github.com/Thatguy027/SFS_Invariant_Sites/tree/master/Spectra
 # elegans_sfs is 4FOLD_0FOLD_GENOME_CHROM-GENOME.sfs
@@ -547,7 +547,7 @@ hdel05_unlinked_figure <- ggplot(plotting_df_h05_unlinked_new, aes(x = entry_num
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                      labels = c(1, seq(5, 9, by = 5), "11+"))
 
-ggsave(paste0(base_dir,"sfigure03.svg"), plot = hdel05_unlinked_figure, width = 8.5, height = 8.5, dpi = 600)
+ggsave(paste0(figures_dir,"sfigure03.svg"), plot = hdel05_unlinked_figure, width = 8.5, height = 8.5, dpi = 600)
 
 
 #Combo of h=0.25 and h=0.5 unlinked figures, since they share a neutral SFS I just have to add one.
@@ -646,4 +646,4 @@ dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_numb
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+")) +
   guides(fill = guide_legend(nrow = 2))
-ggsave(paste0(base_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)
+ggsave(paste0(figures_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)

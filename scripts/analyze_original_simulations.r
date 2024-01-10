@@ -8,9 +8,10 @@ library(ggpubr)
 base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
 
 source(paste0(base_dir, "scripts/calculate_pi.r"))
+sim_outputs_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/"
 
 figures_dir <- paste0(base_dir, "figures_for_publication/")
-dfe_results_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/original_simulations/dfe_results/"
+dfe_results_dir <- paste0(sim_outputs_dir, "original_simulations/dfe_results/")
 dfealpha_dir <- paste0(dfe_results_dir, "dfealpha/")
 dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
     "/", dir(
@@ -296,7 +297,7 @@ stable03 <- F_adjusted_classes %>% arrange(DFE,selfing) %>% select(DFE,selfing,e
   mutate(selfing_adjusted_B = B_avg/selfing_B_avg)
 
 
-write.csv(stable03, file="/nas/longleaf/home/adaigle/DFESelfing/stable03.csv", quote=F)
+#write.csv(stable03, file="/nas/longleaf/home/adaigle/DFESelfing/stable03.csv", quote=F)
 
 F_adjusted_classes_tidy <- gather(F_adjusted_classes, 
     key = "generation", value = "value", c(f0, f1, f2, f3)) %>%
@@ -626,7 +627,9 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   #filter(selfing_class != "50% Selfing") %>%
   #filter(selfing_class != "truth") %>%
   #filter(selfing_class != "Simulated DFE")
-#write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/05099selfingbasic.csv")
+
+write.csv(combo_plot, file=paste0(base_dir, "05099selfingbasic.csv"))
+
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("Simulated DFE", "F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",

@@ -1,10 +1,15 @@
 rm(list=ls())
 library(tidyverse)
 library(ggpubr)
-h01 <- read.csv("/nas/longleaf/home/adaigle/DFESelfing/dom_plot/h01.csv")
-h05 <- read.csv("/nas/longleaf/home/adaigle/DFESelfing/dom_plot/h05.csv")
-h025 <- read.csv("/nas/longleaf/home/adaigle/DFESelfing/dom_plot/h025.csv")
-h075 <- read.csv("/nas/longleaf/home/adaigle/DFESelfing/dom_plot/h075.csv")
+
+base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
+sim_outputs_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/"
+figures_dir <- paste0(base_dir, "figures_for_publication/")
+dominance_dir <- paste0(base_dir, "scripts/dominance/")
+h01 <- read.csv(paste0(dominance_dir, "h01.csv"))
+h05 <- read.csv(paste0(dominance_dir, "h05.csv"))
+h025 <- read.csv(paste0(dominance_dir, "h025.csv"))
+h075 <- read.csv(paste0(dominance_dir, "h075.csv"))
 
 combined_df <- rbind(h01, h05, h025, h075) %>%
     mutate(generation = recode(generation,
@@ -232,7 +237,7 @@ figure6 <- ggarrange(plt0, plt99,
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom", vjust=1)
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/figure6.svg", plot = figure6, width = 8.5, height = 10, dpi = 600)
+ggsave(paste0(figures_dir, "figure6.svg"), plot = figure6, width = 8.5, height = 10, dpi = 600)
 
 plot_50 <- combined_df %>% filter(selfing_class=="0% Selfing") %>%
     mutate(selfing = recode(selfing,
@@ -260,4 +265,4 @@ sfigure06 <- ggplot(plot_50, aes(x = generation, y = value, fill = factor(selfin
   guides(fill=guide_legend(nrow=1, byrow=TRUE))+
   scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
 
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure06.svg", plot = sfigure06, width = 8.5, height = 8.5, dpi = 600)
+ggsave(paste0(figures_dir, "sfigure06.svg"), plot = sfigure06, width = 8.5, height = 8.5, dpi = 600)
