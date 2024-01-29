@@ -523,14 +523,21 @@ mutate(
   )
 
 plotting_df_h05_unlinked_new <- plotting_df_h05_unlinked %>% 
-  filter(selfing != 99 | SFS != "neutral") %>% filter(selfing != 50 | SFS != "neutral") %>%
+   filter(selfing != 50 | SFS != "neutral") %>% #filter(selfing != 99 | SFS != "neutral") %>%
     mutate(selfing = case_when(
-      selfing == 0 & SFS == "neutral" ~ "neutral",
+      selfing == 0 & SFS == "neutral" ~ "Neutral, 0% selfing",
+      selfing == 99 & SFS == "neutral" ~ "Neutral, 99% selfing",
       TRUE ~ as.character(selfing)))
 
 
+plotting_df_h05_unlinked_neutral <- plotting_df_h05_unlinked %>% 
+  filter(selfing == 99 | SFS == "neutral") %>% filter(selfing == 50 | SFS == "neutral") #%>%
+    #mutate(selfing = case_when(
+    #  selfing == 0 & SFS == "neutral" ~ "neutral",
+    #  TRUE ~ as.character(selfing)))
+
 # Reorder the 'selfing' column in your data frame
-plotting_df_h05_unlinked_new$selfing <- factor(plotting_df_h05_unlinked_new$selfing, levels = c("neutral", "0", "50", "99"))
+plotting_df_h05_unlinked_new$selfing <- factor(plotting_df_h05_unlinked_new$selfing, levels = c("Neutral, 0% selfing", "Neutral, 99% selfing", "0", "50", "99"))
 
 # Plot with reordered factor levels
 hdel05_unlinked_figure <- ggplot(plotting_df_h05_unlinked_new, aes(x = entry_number, y = prop, fill = selfing)) +
@@ -538,6 +545,19 @@ hdel05_unlinked_figure <- ggplot(plotting_df_h05_unlinked_new, aes(x = entry_num
   labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   facet_grid(rows = vars(DFE)) +
+  theme(axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), 
+        strip.text = element_text(size = 15), plot.title = element_text(size = 25), 
+        legend.title = element_text(size = 15), legend.text = element_text(size = 15),
+        legend.position = "bottom") +
+  expand_limits(y = c(0, 0.7)) +
+  scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
+                     labels = c(1, seq(5, 9, by = 5), "11+"))
+hdel05_unlinked_neutral <- ggplot(plotting_df_h05_unlinked_neutral, aes(x = entry_number, y = prop, fill = selfing)) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
+  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
+  geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
+  #facet_grid(rows = vars(DFE)) +
   theme(axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
         axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), 
         strip.text = element_text(size = 15), plot.title = element_text(size = 25), 
@@ -646,4 +666,4 @@ dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_numb
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+")) +
   guides(fill = guide_legend(nrow = 2))
-ggsave(paste0(figures_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)
+#ggsave(paste0(figures_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)
