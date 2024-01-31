@@ -754,6 +754,7 @@
 <text transform='translate(28.82,175.51) rotate(-90)' style='font-size: 17.50px; font-family: "Liberation Sans";' textLength='10.77px' lengthAdjust='spacingAndGlyphs'>e</text>
 <text transform='translate(24.03,164.74) rotate(-90)' style='font-size: 25.00px; font-family: "Liberation Sans";' textLength='13.02px' lengthAdjust='spacingAndGlyphs'>s</text>
 <text transform='translate(28.82,151.71) rotate(-90)' style='font-size: 17.50px; font-family: "Liberation Sans";' textLength='11.11px' lengthAdjust='spacingAndGlyphs'>d</text>
+<polyline points='6.39,164.74 6.39,140.60 ' style='stroke-width: 0.75;' />
 <text x='9.29' y='26.24' style='font-size: 24.00px; font-weight: bold; font-family: "Liberation Sans";' textLength='18.58px' lengthAdjust='spacingAndGlyphs'>A</text>
 </g>
 <defs>

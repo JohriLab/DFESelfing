@@ -133,14 +133,10 @@ return(summarize_outputs)
 
 summarize_dom_experiment_SFS <- function(selfing, base_dir) {
 path_to_files <- paste0(base_dir, selfing, "/")
-#path_to_DFESelfing <- paste0("/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_input_", selfing, "/")
-#path_to_dfe_alpha_output <- paste0("/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_output_", selfing, "/")
-#path_to_grapes_current_input <- paste"/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_input_50/"
 
-
-#total neutral sites is 187500
+#total num neutral sites is 187500
 neutral_sites <- 187500
-#total selected sites are 562500
+#total num selected sites is 562500
 selected_sites <- 562500
 
 #read in slim sfs and fixed counts to a list of dataframes
@@ -304,107 +300,6 @@ figure3 <- ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = fa
 
 ggsave(paste0(figures_dir, "figure3.svg"), plot = figure3, width = 8.5, height = 7, dpi = 600)
 
-#plotting an empirical C. elegans DFE from Gilbert et al. Data downloaded from https://github.com/Thatguy027/SFS_Invariant_Sites/tree/master/Spectra
-# elegans_sfs is 4FOLD_0FOLD_GENOME_CHROM-GENOME.sfs
-# invariant sites 
-elegans_sfs <- read.table(paste0(base_dir, "elegans_sfs.txt"))
-elegans_invariant_sfs <- read.table(paste0(base_dir, "elegans_invariant_sfs.txt"))
-elegans_diverged_sfs <- read.table(paste0(base_dir, "elegans_diverged_sfs.txt"))
-elegans_diverged_invariant_sfs <- read.table(paste0(base_dir, "elegans_diverged_invariant_sfs.txt"))
-
-f <- rep(c(1:25,26), times = c(rep(1, each =25),26))
-neutral_last75 <- t(apply(elegans_diverged_sfs[2,][2:52], 1, function(x) {
-      tapply(as.numeric(x), f, sum)
-    }))
-
-    neutral_last75_prop <- t(apply(neutral_last75, 1, function(x) x/sum(x)))
-    selected_last75 <- t(apply(elegans_diverged_sfs[1,][2:52], 1, function(x) {
-      tapply(as.numeric(x), f, sum)
-    }))
-
-    selected_last75_prop <- t(apply(selected_last75, 1, function(x) x/sum(x)))
-
-    summarize_outputs_neutral_last75 <- tibble(
-        mean = apply(neutral_last75, 2, mean),
-        sd = apply(neutral_last75, 2, sd),
-        prop = apply(neutral_last75_prop, 2, mean),
-        propsd = apply(neutral_last75_prop, 2, sd), 
-        entry_number = 1:length(mean),
-        SFS = "neutral"
-        ) 
-    summarize_outputs_selected_last75 <- tibble(
-        mean = apply(selected_last75, 2, mean),
-        sd = apply(selected_last75, 2, sd),
-        prop = apply(selected_last75_prop, 2, mean),
-        propsd = apply(selected_last75_prop, 2, sd), 
-        entry_number = 1:length(mean),
-        SFS = "selected"
-        )
-df <- as.data.frame(rbind(summarize_outputs_selected_last75, summarize_outputs_neutral_last75))
-
-#code to plot one SFS
-
-ggplot(df, aes(x = entry_number, y = mean, fill = factor(SFS, levels = c("selected", "neutral")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
-
-ggplot(df, aes(x = entry_number, y = prop, fill = factor(SFS, levels = c("selected", "neutral")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
-
-
-f <- rep(c(1:25,26), times = c(rep(1, each =25),26))
-neutral_last75 <- t(apply(elegans_diverged_invariant_sfs[2,][2:52], 1, function(x) {
-      tapply(as.numeric(x), f, sum)
-    }))
-
-    neutral_last75_prop <- t(apply(neutral_last75, 1, function(x) x/sum(x)))
-    selected_last75 <- t(apply(elegans_diverged_invariant_sfs[1,][2:52], 1, function(x) {
-      tapply(as.numeric(x), f, sum)
-    }))
-
-    selected_last75_prop <- t(apply(selected_last75, 1, function(x) x/sum(x)))
-
-    summarize_outputs_neutral_last75 <- tibble(
-        mean = apply(neutral_last75, 2, mean),
-        sd = apply(neutral_last75, 2, sd),
-        prop = apply(neutral_last75_prop, 2, mean),
-        propsd = apply(neutral_last75_prop, 2, sd), 
-        entry_number = 1:length(mean),
-        SFS = "neutral"
-        ) 
-
-    summarize_outputs_selected_last75 <- tibble(
-        mean = apply(selected_last75, 2, mean),
-        sd = apply(selected_last75, 2, sd),
-        prop = apply(selected_last75_prop, 2, mean),
-        propsd = apply(selected_last75_prop, 2, sd), 
-        entry_number = 1:length(mean),
-        SFS = "selected"
-        )
-df <- as.data.frame(rbind(summarize_outputs_selected_last75, summarize_outputs_neutral_last75))
-ggplot(df, aes(x = entry_number, y = mean, fill = factor(SFS, levels = c("selected", "neutral")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), position = position_dodge(width = 0.9)) +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
-
-ggplot(df, aes(x = entry_number, y = prop, fill = factor(SFS, levels = c("selected", "neutral")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(x = "Derived allele frequency", y = "Number of polymorphisms", title = "C. elegans_diverged natural population SFS", fill = "SFS Type") +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
-
 
 #dominance experiment: h = 0.25
 domh025_dir <- paste0(sim_outputs_dir, "dom/hdel_0_25/SFS/")
@@ -467,41 +362,6 @@ hdel05_linked_figure <- ggplot(plotting_df_05099, aes(x = entry_number, y = prop
   expand_limits(y=c(0,0.7)) +
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+"))
-
-
-#unlinked dominance experiment: h = 0.25
-domh025_unlinked_dir <- paste0(sim_outputs_dir, "nolinkage_h025/fail_final_50k_outputs/SFS_for_plotting/")
-selfings_h025 <- c(0,50,99)
-input_unlinkedh025_dir <- rep(domh025_unlinked_dir,3)
-results_h025_unlinked <- mapply(summarize_experiment_SFS, selfings_h025, input_unlinkedh025_dir)
-plotting_df_h025_unlinked <- bind_rows(flatten(results_h025_unlinked))
-
-plotting_df_h025_unlinked <- plotting_df_h025_unlinked %>% 
-mutate(
-    selfing_class = case_when(
-      selfing == "0" ~ "0% Selfing",
-      selfing == "50" ~ "50% Selfing",
-      selfing == "80" ~ "80% Selfing",
-      selfing == "90" ~ "90% Selfing",
-      selfing == "95" ~ "95% Selfing",
-      selfing == "99" ~ "99% Selfing",
-    )
-  )
-
-hdel025_unlinked_figure <- ggplot(plotting_df_h025_unlinked, aes(x = entry_number, y = prop, fill = factor(SFS))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
-  geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
-  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
-        legend.title = element_text(size=15), legend.text = element_text(size=15)) +
-  expand_limits(y=c(0,0.7)) +
-  #important addition to make x axis more readable
-  scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
-                       labels = c(1, seq(5, 9, by = 5), "11+"))
-
 
 #unlinked dominance experiment: h = 0.5
 domh05_unlinked_dir <- paste0(sim_outputs_dir, "nolinkage/final_50k_outputs/SFS_for_plotting/")
@@ -570,66 +430,6 @@ hdel05_unlinked_neutral <- ggplot(plotting_df_h05_unlinked_neutral, aes(x = entr
 ggsave(paste0(figures_dir,"sfigure03.svg"), plot = hdel05_unlinked_figure, width = 8.5, height = 8.5, dpi = 600)
 
 
-#Combo of h=0.25 and h=0.5 unlinked figures, since they share a neutral SFS I just have to add one.
-plotting_df_h05_unlinked <- plotting_df_h05_unlinked %>% 
-mutate(
-    SFS = case_when(
-      SFS == "selected" ~ "selected, h=0.5",
-      TRUE ~ SFS
-    ))
-plotting_df_h025_unlinked <- plotting_df_h025_unlinked %>% 
-mutate(
-    SFS = case_when(
-      SFS == "selected" ~ "selected, h=0.25",
-      TRUE ~ SFS
-    ))
-plotting_unlinked_dom_comparison <- 
-  bind_rows(plotting_df_h05_unlinked,plotting_df_h025_unlinked) %>%
-  distinct()
-
-dom_comp_fig <- ggplot(plotting_unlinked_dom_comparison, aes(x = entry_number, y = prop, fill = factor(SFS))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
-  geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
-  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
-        legend.title = element_text(size=15), legend.text = element_text(size=15)) +
-  expand_limits(y=c(0,0.7)) +
-  #important addition to make x axis more readable
-  scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
-                       labels = c(1, seq(5, 9, by = 5), "11+"))
-
-# Compare additive linked vs unlinked simulations
-linked_additive_plot <- plotting_df_05099 %>%
-mutate(
-    SFS = case_when(
-      SFS == "selected" ~ "selected, linked simulations",
-      SFS == "neutral" ~ "neutral, linked simulations"
-    ))
-unlinked_additive_plot <- plotting_df_h05_unlinked %>% 
-mutate(
-    SFS = case_when(
-      SFS == "selected, h=0.5" ~ "selected, unlinked simulations",
-      SFS == "neutral" ~ "neutral, unlinked simulations"
-    ))
-linkage_comp_fig <- rbind(linked_additive_plot, unlinked_additive_plot)
-
-linkage_comp_figure <- ggplot(linkage_comp_fig, aes(x = entry_number, y = prop, fill = factor(SFS))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
-  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
-  geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
-  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
-        legend.title = element_text(size=15), legend.text = element_text(size=15)) +
-  expand_limits(y=c(0,0.7)) +
-  #important addition to make x axis more readable
-  scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
-                       labels = c(1, seq(5, 9, by = 5), "11+"))
-
 plotting_df_h05_linked <- plotting_df_05099 %>% 
 mutate(
     SFS = case_when(
@@ -666,4 +466,4 @@ dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_numb
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+")) +
   guides(fill = guide_legend(nrow = 2))
-#ggsave(paste0(figures_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)
+ggsave(paste0(figures_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)
