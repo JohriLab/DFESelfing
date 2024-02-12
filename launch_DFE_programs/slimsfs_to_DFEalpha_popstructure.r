@@ -1,52 +1,42 @@
-# An R script to convert slim simulation SFS output to DFE alpha's input format
-#TODO fix many hard coded directory paths. 
-#Make sure input and output directories go where you want them to
+# An R script to convert slim simulation SFS output to DFE alpha and GRAPES input formats
+# Prepares slurm scripts for launching from specific directories. 
 
-#initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
-path_to_files <- "/nas/longleaf/home/adaigle/SFS/99/"
-path_to_DFESelfing <- "/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_input_99/"
-path_to_dfe_alpha_output <- "/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_output_99/"
-path_to_grapes_current_input <- "/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_input_99/"
+selfing_levels <- c("50")
+for(selfing_level in selfing_levels) {
+print(selfing_level)
+main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_2/Nem1"
+path_to_files <- paste0(main_dir, "/SFS/")
+path_to_DFESelfing <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_input_", selfing_level, "/")
+path_to_dfe_alpha_output <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_output_", selfing_level, "/")
+path_to_grapes_current_input <- paste0(main_dir, "/dfe_results/grapes/grapes_input_", selfing_level, "/")
+grapes_output <- paste0(main_dir, "/dfe_results/grapes/grapes_output_", selfing_level, "/")
+
+
+dir.create(file.path(paste0(main_dir, "/dfe_results/")))
+dir.create(file.path(paste0(main_dir, "/dfe_results/dfealpha/")))
+dir.create(file.path(paste0(main_dir, "/dfe_results/grapes")))
 
 dir.create(file.path(path_to_DFESelfing))
 dir.create(file.path(path_to_dfe_alpha_output))
+dir.create(file.path(path_to_grapes_current_input))
+dir.create(file.path(grapes_output))
+
 #total neutral sites is 187500
 neutral_sites <- 187500
 #total selected sites are 562500
 selected_sites <- 562500
 
+eqm <- paste0("Nem1_eqm_selfing", selfing_level)
 #read in slim sfs and fixed counts to a list of dataframes
+
 count_sfs_names <- list.files(path = path_to_files, pattern = "count.sfs")
+count_sfs_names <- count_sfs_names[grepl(eqm, count_sfs_names) & grepl("count.sfs", count_sfs_names)]
 count_sfs_df_list <- lapply(
     paste(path_to_files,count_sfs_names,sep=""), 
     function(x) read.table(x, header=TRUE))
 
-#new table method. Not currently in use but will change to this eventually
-sfs_table <- tibble(
-    name = list.files(path = path_to_files, pattern = "count.sfs"),
-    matchname = sub("_count.sfs","",name),
-    fullpath = paste(path_to_files, "/", name,sep=""), 
-    data = lapply(fullpath,read.table)
-)
-
-fixed_table <- tibble(
-    name = list.files(path = path_to_files, pattern = "count.fixed"),
-    matchname = sub("_count.fixed","",name),
-    fullpath = paste(path_to_files, "/", name,sep=""), 
-    data = lapply(fullpath,read.table)
-)
-
-#magic join witchcraft 
-join_table <- inner_join(sfs_table, fixed_table, by="matchname")
-
-#try mutate, make columns with names for differetn thing
-#can use grepl or regex
-join_table <- join_table %>% mutate(DFE = 
-str_extract(matchname, "(?<=DFE)\\d+")) %>% 
-mutate(across(where(is.character), as.factor)) %>% #make characters factors
-mutate(data = map2(data.x, data.y, ~cbind(.x, .y[2]))) #join fixed num to df
 
 #--------------------------------
 #stripping _count.sfs from file names to match fixed_sfs header, to name list
@@ -56,6 +46,8 @@ names(count_sfs_df_list) <- lapply(count_sfs_names,
 )
 
 fixed_sfs_names <- list.files(path = path_to_files, pattern = "count.fixed")
+fixed_sfs_names <- fixed_sfs_names[grepl(eqm, fixed_sfs_names) & grepl("count.fixed", fixed_sfs_names)]
+
 fixed_sfs_df_list <- lapply(
     paste(path_to_files,fixed_sfs_names,sep=""), 
     function(x) read.table(x, header=TRUE))
@@ -88,80 +80,7 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
     add_column(get(x), selected_sites - rowSums(get(x)[2:101]), .before = 2))
 }
 
-#plot row as DF
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[2, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[3, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[4, 3:102]))
-barplot(unlist(eqm_selfing50_DFE1_neu_100_m1[5, 3:102]))
-barplot(tapply(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 3:102]), rep(1:10, each = 10), sum))
 
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[2, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[3, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[4, 3:102]))
-barplot(unlist(eqm_selfing0_DFE1_sel_100_m2[5, 3:102]))
-barplot(tapply(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 3:102]), rep(1:10, each = 10), sum))
-
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[1, 50:101]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[2, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 50:102]))
-
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[1, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[2, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 50:102]))
-barplot(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 50:102]))
-#complex fraction change stuff
-#cell to frac
-#neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[3, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[3, 2:102]))
-#sel2frac <- unlist(eqm_selfing99_DFE1_sel_100_m2[3, 2:102])/sum(unlist(eqm_selfing99_DFE1_sel_100_m2[3, 2:102]))
-#barplot(sel2frac-neu2frac)
-#div <- sel2frac/neu2frac
-#div[is.infinite(div)] <- 0
-#barplot(div)
-#
-#neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[4, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[4, 2:102]))
-#sel2frac <- unlist(eqm_selfing99_DFE1_sel_100_m2[4, 2:102])/sum(unlist(eqm_selfing99_DFE1_sel_100_m2[4, 2:102]))
-#barplot(sel2frac-neu2frac)
-#div <- sel2frac/neu2frac
-#div[is.infinite(div)] <- 0
-#barplot(div)
-#
-#neu2frac <- unlist(eqm_selfing99_DFE1_neu_100_m1[5, 2:102])/sum(unlist(eqm_selfing99_DFE1_neu_100_m1[5, 2:102]))
-#sel2frac <- unlist(eqm_selfing99_DFE1_sel_100_m2[5, 2:102])/sum(unlist(eqm_selfing99_DFE1_sel_100_m2[5, 2:102]))
-#barplot(sel2frac-neu2frac)
-#div <- sel2frac/neu2frac
-#div[is.infinite(div)] <- 0
-#barplot(div)
-
-#dfe2
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[1, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[2, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[3, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[4, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_neu_100_m1[5, 3:101]))
-
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[1, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[2, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[3, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[4, 3:101]))
-barplot(unlist(eqm_selfing99_DFE2_sel_100_m2[5, 3:101]))
-#
-## set up the plot layout
-#par(mfrow = c(2, 3), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0), xpd = TRUE)
-#for (bp in list(bp1, bp2, bp3, bp4, bp5)) {
-#  axis(1, at = bp, labels = FALSE, tick = FALSE)
-#  axis(2, ylim = c(0, max(bp)), las = 1)
-#  box()
-#}
-##now for each experiment, I need to loop through each output, 
-##pasting neu and sel together in a file
-#
-##code to get output1 from DFE1_nue
-#
 DFE_list <- c("DFE1", "DFE2", "DFE3")
 
 #this assumes all files in SFS folder have same number and name of replicates
@@ -234,7 +153,21 @@ s_additional 0 ", file = selconfigpath)
         file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
     write(paste("./est_dfe -c ", selconfigpath, sep = ""), 
         file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""), append = TRUE)
-#return(assign(df_stripped, paste0(x,y)))
+
+    slurmpath <- paste0(path_to_DFESelfing, "../../dfealpha_slurm", selfing_level, ".sh")
+    write("#!/bin/bash
+
+#SBATCH -p general
+#SBATCH -N 1
+#SBATCH -t 00-02:00:00
+#SBATCH -n 1
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=adaigle@email.unc.edu
+
+", file = slurmpath)
+    write("cd ~/dfe-alpha-release-2.16/", file = slurmpath, append = TRUE)
+    write(paste0("bash ", path_to_DFESelfing, "run_dfealpha"), file = slurmpath, append = TRUE)
+
 }}
 
 lapply(DFE_list, dfealpha_sfs)
@@ -244,7 +177,6 @@ lapply(DFE_list, dfealpha_sfs)
 
 # this function creates input sfs files for polydfe 
 # we won't be using it so its commented out for now
-#will add commands in a bit
 #polydfe_sfs <- function(x) {
 #for(y in replicates) {
 #    df <- data.frame(Map(c,
@@ -266,9 +198,7 @@ lapply(DFE_list, dfealpha_sfs)
 #
 #}}
 
-
 # this function creates input sfs files for grapes
-#will add commands in a bit
 grapes_sfs <- function(x) {
 for(y in replicates) {
     neudf <- data.frame(Map(c,
@@ -290,6 +220,25 @@ for(y in replicates) {
     write("#unfolded", file = filepath, append = TRUE)
     write.table(grapes_format, row.names = FALSE, quote = FALSE, sep = "\t",
         file = filepath, append = TRUE)
+
+    slurmpath <- paste0(path_to_DFESelfing, "../../grapes_slurm", selfing_level, ".sh")
+    write("#!/bin/bash
+
+#SBATCH -p general
+#SBATCH -N 1
+#SBATCH -t 00-02:00:00
+#SBATCH --mem=16g
+#SBATCH -n 15
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=adaigle@email.unc.edu
+
+", file = slurmpath)
+    write("cd ~/grapes/", file = slurmpath, append = TRUE)
+    write(paste0("ls ", path_to_grapes_current_input, " | parallel ./grapes -in ", 
+        path_to_grapes_current_input, "{1} -out ", grapes_output, "{1}.csv -model GammaZero "), 
+        file = slurmpath, append = TRUE)
 }}
 
 lapply(DFE_list, grapes_sfs)
+
+}

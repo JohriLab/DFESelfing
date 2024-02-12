@@ -1,14 +1,12 @@
-# An R script to convert slim simulation SFS output to DFE alpha's input format
-#TODO fix many hard coded directory paths. 
-#Make sure input and output directories go where you want them to
+# An R script to convert slim simulation SFS output to DFE alpha and GRAPES input formats
+# Prepares slurm scripts for launching from specific directories. 
 
-#initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
 selfing_levels <- c("0", "50", "99")
 for(selfing_level in selfing_levels) {
 print(selfing_level)
-main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/long_chromosome"
+main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/sample_individuals"
 path_to_files <- paste0(main_dir, "/SFS/")
 path_to_DFESelfing <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_input_", selfing_level, "/")
 path_to_dfe_alpha_output <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_output_", selfing_level, "/")
@@ -26,9 +24,9 @@ dir.create(file.path(path_to_grapes_current_input))
 dir.create(file.path(grapes_output))
 
 #total neutral sites is 187500
-neutral_sites <- 187500 * 6
+neutral_sites <- 187500
 #total selected sites are 562500
-selected_sites <- 562500 * 6
+selected_sites <- 562500
 
 eqm <- paste0("eqm_selfing", selfing_level)
 #read in slim sfs and fixed counts to a list of dataframes
@@ -59,7 +57,6 @@ names(fixed_sfs_df_list) <- lapply(fixed_sfs_names,
 
 #next: for each df in count_sfs, find corresponding df in fixed, and bind X100 column 
 #creates new object for each as well. 
-#for loop could be vectorized eventually 
 combined_df_names_list <- c()
 for(x in names(count_sfs_df_list)) {
     combined_df_names_list <- append(combined_df_names_list, x)
@@ -82,16 +79,12 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 }
 
 
-DFE_list <- c("DFE1", "DFE2", "DFE3")
-#DFE_list <- c("DFE2", "DFE3")
+DFE_list <- c("DFE2")
 
 #this assumes all files in SFS folder have same number and name of replicates
 #if this assumption is violated the code will need to get more complex
 
 replicates <- get(combined_df_names_list[1])$filename
-
-#clears out script to run dfe alpha 
-#write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
 
 
 dfealpha_sfs <- function(x) {

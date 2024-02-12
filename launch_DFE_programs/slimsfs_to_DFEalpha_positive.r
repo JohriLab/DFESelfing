@@ -1,8 +1,7 @@
-# An R script to convert slim simulation SFS output to DFE alpha's input format
-#TODO fix many hard coded directory paths. 
-#Make sure input and output directories go where you want them to
+# An R script to convert slim simulation SFS output to DFE alpha and GRAPES input formats
+# Prepares slurm scripts for launching from specific directories. 
+# A bit more complex than the others as it also sets up folded SFS analyses. 
 
-#initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
 selfing_levels <- c("0", "50", "80", "90", "95", "99")
@@ -69,7 +68,7 @@ dir.create(file.path(grapes_nodivparam_output))
 
 dir.create(file.path(path_to_grapes_folded_current_input))
 dir.create(file.path(grapes_folded_output))
-## CHANGE THESE DEPENDING ON NUMBER OF SIMULATIONS!!
+
 neutral_sites <- 187500
 selected_sites <- 562500
 
@@ -103,7 +102,6 @@ names(fixed_sfs_df_list) <- lapply(fixed_sfs_names,
 
 #next: for each df in count_sfs, find corresponding df in fixed, and bind X100 column 
 #creates new object for each as well. 
-#for loop could be vectorized eventually 
 combined_df_names_list <- c()
 for(x in names(count_sfs_df_list)) {
     combined_df_names_list <- append(combined_df_names_list, x)
@@ -138,8 +136,6 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 
 
 DFE_list <- c("DFE1", "DFE2", "DFE3")
-#DFE_list <- c("DFE2", "DFE3")
-#DFE_list <- c("DFE2")
 
 #this assumes all files in SFS folder have same number and name of replicates
 #if this assumption is violated the code will need to get more complex
@@ -147,10 +143,7 @@ DFE_list <- c("DFE1", "DFE2", "DFE3")
 replicates <- get(combined_df_names_list[1])$filename
 replicates <- replicates[!grepl("m1", replicates)]
 
-#clears out script to run dfe alpha 
-#write("", file = paste(path_to_DFESelfing, "run_dfealpha", sep = ""))
 
-#}
 
 dfealpha_sfs <- function(x) {
     for(y in replicates) {

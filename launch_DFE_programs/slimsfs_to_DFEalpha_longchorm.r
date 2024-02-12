@@ -1,16 +1,12 @@
-# An R script to convert slim simulation SFS output to DFE alpha's input format
-#TODO fix many hard coded directory paths. 
-#Make sure input and output directories go where you want them to
+# An R script to convert slim simulation SFS output to DFE alpha and GRAPES input formats
+# Prepares slurm scripts for launching from specific directories. 
 
-#initialize. Eventually can make the path an argument or at least relative. 
 rm(list=ls())
 library(tidyverse)
 selfing_levels <- c("0", "50", "99")
-#selfing_levels <- c("0")
-
 for(selfing_level in selfing_levels) {
 print(selfing_level)
-main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/nolinkage_h025/final_50k_outputs"
+main_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/long_chromosome"
 path_to_files <- paste0(main_dir, "/SFS/")
 path_to_DFESelfing <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_input_", selfing_level, "/")
 path_to_dfe_alpha_output <- paste0(main_dir, "/dfe_results/dfealpha/DFE_alpha_output_", selfing_level, "/")
@@ -27,9 +23,10 @@ dir.create(file.path(path_to_dfe_alpha_output))
 dir.create(file.path(path_to_grapes_current_input))
 dir.create(file.path(grapes_output))
 
-## CHANGE THESE DEPENDING ON NUMBER OF SIMULATIONS!!
-neutral_sites <- 187500
-selected_sites <- 50000
+#total neutral sites is 187500
+neutral_sites <- 187500 * 6
+#total selected sites are 562500
+selected_sites <- 562500 * 6
 
 eqm <- paste0("eqm_selfing", selfing_level)
 #read in slim sfs and fixed counts to a list of dataframes
@@ -40,7 +37,6 @@ count_sfs_df_list <- lapply(
     paste(path_to_files,count_sfs_names,sep=""), 
     function(x) read.table(x, header=TRUE))
 
-
 #--------------------------------
 #stripping _count.sfs from file names to match fixed_sfs header, to name list
 names(count_sfs_df_list) <- lapply(count_sfs_names,
@@ -50,7 +46,6 @@ names(count_sfs_df_list) <- lapply(count_sfs_names,
 
 fixed_sfs_names <- list.files(path = path_to_files, pattern = "count.fixed")
 fixed_sfs_names <- fixed_sfs_names[grepl(eqm, fixed_sfs_names) & grepl("count.fixed", fixed_sfs_names)]
-
 fixed_sfs_df_list <- lapply(
     paste(path_to_files,fixed_sfs_names,sep=""), 
     function(x) read.table(x, header=TRUE))
@@ -85,8 +80,6 @@ for(x in combined_df_names_list[grepl("sel_", combined_df_names_list)]) {
 
 
 DFE_list <- c("DFE1", "DFE2", "DFE3")
-#DFE_list <- c("DFE2", "DFE3")
-#DFE_list <- c("DFE2")
 
 #this assumes all files in SFS folder have same number and name of replicates
 #if this assumption is violated the code will need to get more complex
@@ -164,7 +157,8 @@ s_additional 0 ", file = selconfigpath)
 
 #SBATCH -p general
 #SBATCH -N 1
-#SBATCH -t 00-02:00:00
+#SBATCH -t 00-00:30:00
+#SBATCH --mem=1g
 #SBATCH -n 1
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=adaigle@email.unc.edu
