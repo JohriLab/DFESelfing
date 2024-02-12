@@ -4,8 +4,9 @@ library(tidyverse)
 library(reshape2)
 
 base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
-
-source(paste0(base_dir, "scripts/calculate_pi.r")) # not used for now. Could be updated to get pi for long chroms
+sim_outputs_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/"
+results_dir <- paste0(sim_outputs_dir, "long_chromosome/")
+source(paste0(base_dir, "scripts/calculate_pi_longchrom.r")) 
 figures_dir <- paste0(base_dir, "figures_for_publication/")
 
 dfealpha_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/long_chromosome/dfe_results/dfealpha/"
@@ -314,7 +315,7 @@ DFE_proportions_truth <- function(B, meanGamma,beta) {
 }
 
 dataframe_of_truth2_nopos <- dataframe_of_truth2 %>% filter(!str_detect(fullpath, "pos")) %>%
-mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+mutate(output = pmap(list(B/(1/(1+(.01 *as.numeric(selfing)) / (2-.01*as.numeric(selfing)))), true_mean, true_shape), DFE_proportions_truth)) %>%
     unnest_wider(output) %>%
     group_by(selfing, DFE) %>%
     summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
@@ -568,7 +569,20 @@ ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing,
   scale_fill_manual(values = c("#404040", rep(c("purple"),6)))+ 
   theme(legend.position="none")
 
-
+B_value_table <- B_value_table %>%
+  mutate(
+    selfing_class = case_when(
+      selfing == "0" ~ "0% Selfing",
+      selfing == "50" ~ "50% Selfing",
+      selfing == "99" ~ "99% Selfing",
+    ),
+    B_avg = B_avg/(1/(1+(.01 *as.numeric(selfing)) / (2-.01*as.numeric(selfing))))
+  )
+B_value_table$pis_avg <- NULL
+B_value_table$empirical_Ne_avg <- NULL
+B_value_table$generation <- "f1"
+B_value_table$value <- 0.8
+B_value_table$selfing <- "GRAPES, 3000 gene chromosome"
 # combo dfealpha and grapes plot:
 combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(!grepl("true", selfing)) %>%
@@ -585,11 +599,30 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
      '99' = 'DFE-alpha, 3000 gene chromosome', 
      '99_grapes' = 'GRAPES, 3000 gene chromosome'))
 
+combo_plot_with_Badjusted <- bind_rows(voodoo3,voodoo3_grapes) %>%
+  mutate(selfing = case_when(
+        selfing == 'truth'  ~ 'Simulated DFE',
+        TRUE ~ selfing)) %>%
+  filter(!grepl("truth", selfing)) %>%
+  filter(!grepl("F_adjusted", selfing)) %>%
+  filter(selfing_class != "80% Selfing") %>%
+  filter(selfing_class != "90% Selfing") %>%
+  filter(selfing_class != "95% Selfing") %>% 
+  filter(selfing_class != "truth") %>% 
+    mutate(selfing = recode(selfing,
+     'Dominance_adjusted_50' = 'Simulated DFE',
+     '0' = 'DFE-alpha, 3000 gene chromosome', 
+     '0_grapes' = 'GRAPES, 3000 gene chromosome',
+      '50' = 'DFE-alpha, 3000 gene chromosome', 
+     '50_grapes' = 'GRAPES, 3000 gene chromosome',
+     '99' = 'DFE-alpha, 3000 gene chromosome', 
+     '99_grapes' = 'GRAPES, 3000 gene chromosome',
+     'true0' = "Adjusted DFE",
+     'true50' = "Adjusted DFE",   
+     'true99' = "Adjusted DFE")) 
+
 ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "DFE-alpha","GRAPES", "F_adjusted_0", "true0", 0, "0_grapes",
-        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
-        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
-        "F_adjusted_99", "true99", 99, "99_grapes")))) +
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha","GRAPES")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
@@ -599,6 +632,23 @@ ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing,
   scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
+
+sfigure06 <- ggplot(combo_plot_with_Badjusted, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha, 3000 gene chromosome", "GRAPES, 3000 gene chromosome")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=2, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table, 
+    aes(label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.25, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
 
 largechr_DFE <- combo_plot %>% 
   mutate(selfing = case_when(
@@ -616,8 +666,9 @@ original_DFE <- original_DFE[2:8] %>%
      '99_grapes' = 'GRAPES, 500 gene chromosome'))
 
 comparison_plot <- rbind(original_DFE, largechr_DFE) 
+comparison_plot_99 <- comparison_plot %>% filter(selfing_class=="99% Selfing")
 
-figure5 <- ggplot(comparison_plot, aes(x = generation, y = value, fill = factor(selfing, 
+figure5 <- ggplot(comparison_plot_99, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("truth", "Simulated DFE", "DFE-alpha, 500 gene chromosome", "GRAPES, 500 gene chromosome", "DFE-alpha, 3000 gene chromosome", "GRAPES, 3000 gene chromosome")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
@@ -626,9 +677,29 @@ figure5 <- ggplot(comparison_plot, aes(x = generation, y = value, fill = factor(
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
   scale_fill_manual(values = c("#404040", rep(c("#F8766D", "#a020f0","#df948f", "#c69cdb"),6))) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15), 
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
-  guides(fill=guide_legend(nrow=3, byrow=TRUE)) 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=12),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=10)) +
+  guides(fill=guide_legend(nrow=3, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
 
-ggsave(paste0(figures_dir, "figure5.svg"), plot = figure5, width = 8.5, height = 8.5, dpi = 600)
+
+ggsave(paste0(figures_dir, "figure5.svg"), plot = figure5, width = 6, height = 7, dpi = 300)
+ggsave(paste0(figures_dir, "sfigure06.svg"), plot = sfigure06, width = 8.5, height = 8.5, dpi = 150)
+
+#sfigure06 <- ggplot(comparison_plot, aes(x = generation, y = value, fill = factor(selfing, 
+#    levels = c("truth", "Simulated DFE", "DFE-alpha, 500 gene chromosome", "GRAPES, 500 gene chromosome", "DFE-alpha, 3000 gene chromosome", "GRAPES, 3000 gene chromosome")))) +
+#  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+#  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+#  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+#  expand_limits(y=c(0,1)) +
+#  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+#  #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
+#  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "#a020f0","#df948f", "#c69cdb"),6))) + 
+#  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+#    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=12),
+#    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=10)) +
+#  guides(fill=guide_legend(nrow=3, byrow=TRUE)) +
+#  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
+
+#ggsave(paste0(figures_dir, "sfigure06.svg"), plot = sfigure06, width = 6, height = 7, dpi = 300)

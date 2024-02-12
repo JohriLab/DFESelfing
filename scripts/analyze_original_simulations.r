@@ -6,9 +6,9 @@ library(scales)
 library(ggpubr)
 
 base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
-
-source(paste0(base_dir, "scripts/calculate_pi.r"))
 sim_outputs_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/"
+results_dir <- paste0(sim_outputs_dir, "original_simulations/")
+source(paste0(base_dir, "scripts/calculate_pi.r"))
 
 figures_dir <- paste0(base_dir, "figures_for_publication/")
 dfe_results_dir <- paste0(sim_outputs_dir, "original_simulations/dfe_results/")
@@ -248,6 +248,7 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
   mutate (F = (as.numeric(selfing)/100)/(2-(as.numeric(selfing)/100)),
     selfing_Ne = 5000/(1+F),
     selfing_B = selfing_Ne / 5000,
+    empircal_B_selfing_adjust = B/selfing_B, 
     F_adjusted_gamma = selfing_B * true_mean,
     deltaNe = selfing_Ne - empirical_Ne,
     newNE = 5000 - deltaNe,
@@ -306,8 +307,14 @@ DFE_proportions_truth <- function(B, meanGamma,beta) {
     return(c(f0 = f0, f1 = f1, f2 = f2, f3 = f3))
 }
 
-dataframe_of_truth2_nopos <- dataframe_of_truth2 %>% filter(!str_detect(fullpath, "pos")) %>%
-mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+#dataframe_of_truth2_adjusted_B <- dataframe_of_truth2 %>% arrange(DFE, matchname)
+dataframe_of_truth2_adjusted_B <- dataframe_of_truth2 %>% left_join(prediction_accuracy_table)
+
+B_adjust_csv <- dataframe_of_truth2_adjusted_B %>% group_by(DFE,selfing) %>% summarize(across(where(is.numeric), list(avg = mean, sd = sd)))
+write.csv(B_adjust_csv, "/nas/longleaf/home/adaigle/DFESelfing/B_adjust.csv")
+
+dataframe_of_truth2_nopos <- dataframe_of_truth2_adjusted_B %>% filter(!str_detect(fullpath, "pos")) %>%
+mutate(output = pmap(list(empircal_B_selfing_adjust, true_mean, true_shape), DFE_proportions_truth)) %>%
     unnest_wider(output) %>%
     group_by(selfing, DFE) %>%
     summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
@@ -334,9 +341,9 @@ grapes_gammazero_simple_summary <- grapes_gammazero_simple_summary %>%
         'z1'= f1 ,
         'z2'= f2 ,
         'z3'= f3 ,
-       'f0' = t0_avg , 
-       'f1' = t1_avg , 
-       'f2' = t2_avg , 
+        'f0' = t0_avg , 
+        'f1' = t1_avg , 
+        'f2' = t2_avg , 
         'f3' = t3_avg ,
         'f0_sd'= t0_sd , 
         'f1_sd'= t1_sd , 
@@ -414,15 +421,15 @@ dfealpha_rainbow <- ggplot(dfealpha_rainbow_plot, aes(x = generation, y = value,
     levels = selfing_order))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   facet_wrap(~ DFE, nrow = 1) +
-  labs(title = "", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(title = "", x = "", y = "proportion of mutations", fill = "Selfing %") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) + 
   scale_fill_manual(values = c("#404040", hue_pal()(6))) +
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), 
-    axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
-    plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+    axis.title.x=element_text(size=15),axis.title.y=element_text(size=15), strip.text = element_text(size=15),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
-  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
 
 # Split data frame into "truth" and "non-truth" data frames
 voodoo2_truth <- voodoo %>% filter(grepl("Simulated DFE", selfing))
@@ -486,7 +493,7 @@ ggplot(voodoo3, aes(x = generation, y = value, fill = factor(selfing,
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D"),6)))+ 
-  theme(legend.position="none")
+  theme(legend.position="bottom")
 
 ### grapes
   grapes_for_plotting <- bind_rows(df_true_tidy,df_tidy,F_adjusted_classes_tidy, truth_tidy) %>%
@@ -519,17 +526,17 @@ grapes_rainbow <- ggplot(grapes_rainbow_plot, aes(x = generation, y = value, fil
   expand_limits(y=c(0,1)) + 
   scale_fill_manual(values = c("#404040", hue_pal()(6))) +
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), 
-    axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
-    plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+    axis.title.x=element_text(size=15),axis.title.y=element_text(size=15), strip.text = element_text(size=15),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
-  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
 
 figure1 <- ggarrange(dfealpha_rainbow, grapes_rainbow,
                     labels = c("A", "B"),
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave(paste0(figures_dir, "figure1.pdf"), plot = figure1, width = 8.5, height = 8.5, dpi = 600)
+ggsave(paste0(figures_dir, "figure1.pdf"), plot = figure1, width = 8.5, height = 8.5, dpi = 300)
 
 voodoo_grapes2 <- voodoo_grapes %>%
     mutate(selfing = case_when(
@@ -569,9 +576,23 @@ ggplot(just_grapes_plot, aes(x = generation, y = value, fill = factor(selfing,
   scale_fill_manual(values = c("#404040", rep(c("purple"),6)))+ 
   theme(legend.position="none")
 
-
-# combo dfealpha and grapes plot:
-
+B_value_table <- B_value_table %>%
+  mutate(
+    selfing_class = case_when(
+      selfing == "0" ~ "0% Selfing",
+      selfing == "50" ~ "50% Selfing",
+      selfing == "80" ~ "80% Selfing",
+      selfing == "90" ~ "90% Selfing",
+      selfing == "95" ~ "95% Selfing",
+      selfing == "99" ~ "99% Selfing",
+    ),
+    B_avg = B_avg/(1/(1+(.01 *as.numeric(selfing)) / (2-.01*as.numeric(selfing))))
+  )
+B_value_table$pis_avg <- NULL
+B_value_table$empirical_Ne_avg <- NULL
+B_value_table$generation <- "f1"
+B_value_table$value <- 0.8
+B_value_table$selfing <- "GRAPES"
 combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(!grepl("true", selfing)) %>%
   filter(!grepl("F_adjusted", selfing)) %>%
@@ -579,21 +600,59 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
   filter(selfing_class != "90% Selfing") %>%
   filter(selfing_class != "95% Selfing") 
 
+combo_plot_with_Badjusted <- bind_rows(voodoo3,voodoo3_grapes) %>%
+  filter(!grepl("truth", selfing)) %>%
+  filter(!grepl("F_adjusted", selfing)) %>%
+  #filter(selfing_class != "80% Selfing") %>%
+  #filter(selfing_class != "90% Selfing") %>%
+  #filter(selfing_class != "95% Selfing") %>% 
+  filter(selfing_class != "truth") %>% 
+    mutate(selfing = recode(selfing,
+     '0_grapes' = 'GRAPES',
+     '50_grapes' = 'GRAPES',
+     '80_grapes' = 'GRAPES',
+     '90_grapes' = 'GRAPES',
+     '95_grapes' = 'GRAPES',     
+     '99_grapes' = 'GRAPES',
+     '0' = 'DFE-alpha',
+     '50' = 'DFE-alpha',
+     '80' = 'DFE-alpha',
+     '90' = 'DFE-alpha',
+     '95' = 'DFE-alpha',     
+     '99' = 'DFE-alpha',
+     'true0' = "Adjusted DFE",
+     'true50' = "Adjusted DFE",
+     'true80' = "Adjusted DFE",
+     'true90' = "Adjusted DFE",
+     'true95' = "Adjusted DFE",     
+     'true99' = "Adjusted DFE")) 
+#B_value_table <- B_value_table %>%
+#  mutate(selfing_class = factor(selfing_class, levels = c("0.5x", "0.1x", "0.05x", "0.01x", "0.005x", "0.001x")))
+
+
 #write.csv(combo_plot, file=paste0(base_dir, "05099selfingbasic.csv"))
 
-ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("Simulated DFE", "F_adjusted_0", "true0", 0, "0_grapes",
-        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
-        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
-        "F_adjusted_99", "true99", 99, "99_grapes")))) +
+Badjusted <- ggplot(combo_plot_with_Badjusted, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "Selfing %") +
+  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6))) + 
-  theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table, 
+    aes(label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.25, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
+
+
+
+ggsave(paste0(figures_dir, "figure1.svg"), plot = Badjusted, width = 8.5, height = 7.5, dpi = 300)
+
 #combo_plot <- combo_plot %>% mutate(dominance=0.5)
 combo_plot_int <- combo_plot %>% mutate(intergenic=3000)
 write.csv(combo_plot_int, file=paste0(base_dir, "scripts/intergenic_plot/int3000.csv"))
@@ -705,9 +764,9 @@ gamma_accuracy <- ggplot(prediction_accuracy_table_gamma_melt, aes(x = factor(ga
   geom_errorbar(aes(ymin = avg-sd, ymax = avg+sd), position = position_dodge(width = 0.9), width = 0.2) +
   labs(x = "", y = expression(2 * N[e] * bar(s[d])), fill = "", title = "") + 
   scale_fill_manual(values=c("#404040", rep(c("#F8766D", "purple"),6))) + 
-  theme(axis.text.x = element_blank(), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
+  theme(axis.text.x=element_text(size=0), axis.text.y=element_text(size=15), 
+    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=15),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12))
 
 
 #beta stuff
@@ -746,13 +805,13 @@ beta_accuracy <- ggplot(prediction_accuracy_table_beta_melt, aes(x = gamma_metho
   geom_errorbar(aes(ymin = avg-sd, ymax = avg+sd), position = position_dodge(width = 0.9), width = 0.2) +
   labs(title = "", x = "", y = expression(beta), fill = "") +
   scale_fill_manual(values=c("#404040", rep(c("#F8766D", "purple"),6))) + 
-  theme(axis.text.x = element_blank(), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15),legend.text = element_text(size=15))
+  theme(axis.text.x=element_text(size=0), axis.text.y=element_text(size=15), 
+    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=15),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12))
 
 sfigure01 <- ggarrange(gamma_accuracy, beta_accuracy,
                     labels = c("A", "B"),
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave(paste0(figures_dir, "sfigure01.svg"), plot = sfigure01, width = 8.5, height = 9.5, dpi = 600)
+ggsave(paste0(figures_dir, "sfigure01.svg"), plot = sfigure01, width = 8.5, height = 9.5, dpi = 150)

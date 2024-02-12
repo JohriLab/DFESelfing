@@ -7,7 +7,7 @@ rm(list=ls())
 library(tidyverse)
 plot_sfs_data <- function(Nem) { 
 summarize_experiment_SFS <- function(selfing) {
-path_to_files <- paste0(paste0("/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_2/", Nem, "/SFS/"), selfing, "/")
+path_to_files <- paste0(paste0("/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_1/", Nem, "/SFS/"), selfing, "/")
 #path_to_DFESelfing <- paste0("/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_input_", selfing, "/")
 #path_to_dfe_alpha_output <- paste0("/nas/longleaf/home/adaigle/rerun_dfealpha/DFE_alpha_output_", selfing, "/")
 #path_to_grapes_current_input <- paste"/nas/longleaf/home/adaigle/work/dominance_inputsandoutputs/grapes_input_50/"
@@ -158,8 +158,8 @@ ggplot(plotting_df_0, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   facet_grid(rows = vars(DFE), cols = vars(selfing)) +
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=15)) +
   #important addition to make x axis more readable
@@ -179,7 +179,7 @@ mutate(
       selfing == "95" ~ "95% Selfing",
       selfing == "99" ~ "99% Selfing",
     )
-  )
+  ) %>% filter(selfing!=50)
 return(plotting_df_05099)}
 
 Nem2 <- plot_sfs_data("Nem2")
@@ -195,8 +195,8 @@ Nem2_plt <- ggplot(Nem2, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=12),
         legend.position = "bottom") +
@@ -216,8 +216,8 @@ Nem1_plt <- ggplot(Nem1, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=12),
         legend.position = "bottom") +
@@ -237,8 +237,8 @@ Nem05_plt <- ggplot(Nem05, aes(x = entry_number, y = prop, fill = factor(SFS))) 
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=12),
         legend.position = "bottom") +
@@ -258,8 +258,8 @@ Nem01_plt <- ggplot(Nem01, aes(x = entry_number, y = prop, fill = factor(SFS))) 
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=12),
         legend.position = "bottom") +
@@ -284,5 +284,5 @@ sfigure12 <- ggarrange(Nem05_plt, Nem01_plt,
                     common.legend = T, legend = "bottom")
 
 #change names for uneven sampling sfigures
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure18.svg", plot = sfigure11, width = 8.5, height = 11, dpi = 600)
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure19.svg", plot = sfigure12, width = 8.5, height = 11, dpi = 600)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure16.svg", plot = sfigure11, width = 8.5, height = 9, dpi = 150)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure17.svg", plot = sfigure12, width = 8.5, height = 9, dpi = 150)

@@ -2,8 +2,8 @@
 # in slim output files
 library(tidyverse)
 
-total_neu_mutations <- 187500
-total_sel_mutations <- 562500
+total_neu_mutations <- 187500 * 6
+total_sel_mutations <- 562500 * 6
 theta <- 4*5000*3.3e-9*100
 
 #need to read in all m1_output.txt files in a way that preserves selfing%_DFE#_replicate structure
@@ -157,10 +157,18 @@ dirs <- dirs[ !grepl("subpops", dirs) ]
 #mutate(data = NULL)#don't need the big dataframes anymore
 
 string_pattern <- c("m1")
+#missing two replicates from 0% selfing
+#due to excessive sim run time and high similarity of results these weren't rerun
+dirs <- dirs[!grepl("_0/DFE1output2.txt", dirs) & !grepl("_0/DFE1output3.txt", dirs)]
+dirs <- dirs[!grepl("_0/DFE2output2.txt", dirs) & !grepl("_0/DFE2output3.txt", dirs)]
+dirs <- dirs[!grepl("_0/DFE3output2.txt", dirs) & !grepl("_0/DFE3output3.txt", dirs)]
 
 tidy_summary_table <- tibble(
     name = list.files(path = dirs, pattern = "^output..txt"),
-    fullpath = paste0(dirs, "/", name),
+    fullpath = paste0(dirs, "/", name)) %>% 
+  filter(!grepl("g0_DFE1/output2|g0_DFE2/output2|g0_DFE3/output2", fullpath))
+
+tidy_summary_table <- tidy_summary_table %>% mutate(
     selfing = str_extract(fullpath, "(?<=eqm_selfing)\\d+"),
     DFE = str_extract(fullpath, "(DFE)\\d+"),
     output = str_extract(fullpath, "(?<=output)\\d+"),

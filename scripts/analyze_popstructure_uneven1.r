@@ -3,13 +3,14 @@ library(RColorBrewer)
 library(tidyverse)
 library(reshape2)
 base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
-source(paste0(base_dir, "scripts/calculate_pi.r"))
 
 #Nem <- "Nem01"
 Nems <- c("Nem2", "Nem1", "Nem05", "Nem01")
 
 for(Nem in Nems) {
 results_dir <- paste0("/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_1/", Nem)
+source(paste0(base_dir, "scripts/calculate_pi.r"))
+
 figures_dir <- paste0(base_dir, "figures_for_publication/")
 
 results_dir <- paste0("/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_1/", Nem, "/dfe_results/")
@@ -316,7 +317,7 @@ DFE_proportions_truth <- function(B, meanGamma,beta) {
 }
 
 dataframe_of_truth2_nopos <- dataframe_of_truth2 %>% filter(!str_detect(fullpath, "pos")) %>%
-mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+mutate(output = pmap(list(B/(1/(1+(.01 *as.numeric(selfing)) / (2-.01*as.numeric(selfing)))), true_mean, true_shape), DFE_proportions_truth)) %>%
     unnest_wider(output) %>%
     group_by(selfing, DFE) %>%
     summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
@@ -410,7 +411,7 @@ dfealpha_for_plotting$variable <- ifelse(grepl("_sd", dfealpha_for_plotting$vari
 voodoo <- pivot_wider(dfealpha_for_plotting, 
   id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value") %>%
 mutate(selfing = case_when(
-        selfing == 'True0'  ~ 'truth', 
+        selfing == 'True0'  ~ 'Simulated DFE', 
         selfing == 'true0_recalc' ~ 'true0',
         selfing == '100' ~ '99',
         TRUE ~ selfing 
@@ -419,10 +420,10 @@ mutate(selfing = case_when(
 #removing adjusted truths for rainbow plots for now
 dfealpha_rainbow_plot <- voodoo %>% 
   filter(!grepl("F_adjusted|true", selfing)) 
-selfing_order <- c("truth", 0, 50, 80, 90, 95, 99)
+selfing_order <- c("Simulated DFE", 0, 50, 80, 90, 95, 99)
 
 # Split data frame into "truth" and "non-truth" data frames
-voodoo2_truth <- voodoo %>% filter(grepl("truth", selfing))
+voodoo2_truth <- voodoo %>% filter(grepl("Simulated DFE", selfing))
 voodoo2_not_truth <- voodoo %>% filter(!grepl("truth", selfing))
 
 # Replicate "truth" data frame
@@ -486,7 +487,7 @@ grapes_for_plotting$variable <- ifelse(grepl("_sd", grapes_for_plotting$variable
 
 voodoo_grapes <- pivot_wider(grapes_for_plotting, id_cols = c("generation","DFE","selfing"), names_from = "variable", values_from = "value")  %>%
     mutate(selfing = case_when(
-        selfing == "True0" ~ "truth",
+        selfing == "True0" ~ "Simulated DFE",
         selfing == "true0_recalc" ~ "true0",
         TRUE ~ selfing
     ))
@@ -522,9 +523,27 @@ mutate(
 
 just_grapes_plot <- bind_rows(df_truth_rep_self, voodoo3_grapes, simulated_truth) 
 
-# combo dfealpha and grapes plot:
+
+B_value_table <- B_value_table %>%
+  mutate(
+    selfing_class = case_when(
+      selfing == "0" ~ "0% Selfing",
+      selfing == "50" ~ "50% Selfing",
+      selfing == "80" ~ "80% Selfing",
+      selfing == "90" ~ "90% Selfing",
+      selfing == "95" ~ "95% Selfing",
+      selfing == "99" ~ "99% Selfing",
+    ),
+    B_avg = B_avg/(1/(1+(.01 *as.numeric(selfing)) / (2-.01*as.numeric(selfing))))
+  )
+B_value_table$pis_avg <- NULL
+B_value_table$empirical_Ne_avg <- NULL
+B_value_table$generation <- "f1"
+B_value_table$value <- 0.8
+B_value_table$selfing <- "GRAPES"
+
 combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
-  filter(!grepl("true", selfing)) %>%
+  filter(!grepl("truth", selfing_class)) %>%
   filter(!grepl("F_adjusted", selfing)) %>%
   filter(!grepl("80% Selfing|90% Selfing|95% Selfing", selfing_class)) %>%
     mutate(selfing = recode(selfing,
@@ -534,19 +553,22 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
       '50' = 'DFE-alpha', 
      '50_grapes' = 'GRAPES',
      '99' = 'DFE-alpha', 
-     '99_grapes' = 'GRAPES'))
+     '99_grapes' = 'GRAPES',
+     'true0' = "Adjusted DFE",
+     'true50' = "Adjusted DFE",
+     'true80' = "Adjusted DFE",
+     'true90' = "Adjusted DFE",
+     'true95' = "Adjusted DFE",     
+     'true99' = "Adjusted DFE")) 
 
 combo <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "DFE-alpha", "GRAPES","F_adjusted_0", "true0", 0, "0_grapes",
-        "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
-        "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
-        "F_adjusted_99", "true99", 99, "99_grapes")))) +
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  scale_fill_manual(values = c("#404040",rep(c("#F8766D", "purple"),3))) + 
+  scale_fill_manual(values = c("#404040",rep(c("grey", "#F8766D", "purple"),3))) + 
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
   plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +

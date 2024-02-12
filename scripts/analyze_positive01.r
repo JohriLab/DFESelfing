@@ -198,7 +198,7 @@ dataframe_of_truth2 <-
     mutate(true_mean = unlist(true_gammas[DFE])) %>%
     mutate(true_shape = unlist(true_betas[DFE]))
 dataframe_of_truth2_pos <- dataframe_of_truth2 %>% 
-mutate(output = pmap(list(B, true_mean, true_shape), DFE_proportions_truth)) %>%
+mutate(output = pmap(list(B/(1/(1+(.01 *as.numeric(selfing)) / (2-.01*as.numeric(selfing)))), true_mean, true_shape), DFE_proportions_truth)) %>%
     unnest_wider(output) %>%
     group_by(selfing, DFE) %>%
     summarize(across(where(is.numeric), list(avg = mean, sd = sd))) %>%
@@ -241,28 +241,13 @@ pos_voodoo_grapes <- pos_voodoo_grapes %>%
         selfing == 99 ~ "99_grapes",
         TRUE ~ selfing
     ))
-pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(selfing %in% c('true90', 'true80', 'true95'))) %>% #leaving filtering for last so that I can toggle what I want in the chart
-  filter(!grepl("F_adjusted|true", selfing)) 
-selfing_order <- c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")
 
-# Create the grouped bar chart with custom selfing order
-ggplot(pos_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, levels = c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  facet_wrap(~ DFE, nrow = 2) +
-  labs(title = "Grapes positive selection deleterious DFEs", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
-  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
-  expand_limits(y=c(0,1))
-ggplot(pos_voodoo_grapes, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = selfing_order))) +
-  geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  facet_wrap(~ DFE, nrow = 1) +
-  labs(title = "Grapes", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
-  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
-  expand_limits(y=c(0,1)) + 
-  scale_fill_manual(values = c("#404040", hue_pal()(6))) +
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), 
-  plot.title= element_text(size=25), legend.title = element_text(size=15), legend.text = element_text(size=15))
+#pos_voodoo_grapes <- filter(pos_voodoo_grapes, !(selfing %in% c('true90', 'true80', 'true95'))) %>% #leaving filtering for last so that I can toggle what I want in the chart
+  #filter(!grepl("F_adjusted|true", selfing)) 
+#  filter(!grepl("F_adjusted", selfing)) 
+pos_voodoo_grapes <- filter(pos_voodoo_grapes, !grepl("F_adjusted", selfing)) #leaving filtering for last so that I can toggle what I want in the chart
+
+selfing_order <- c("truth", "true0", "0_grapes", "true50", "50_grapes", "true99", "99_grapes")
 
 ############# summary tables
 #write.csv(dfealpha_summary, file = "/nas/longleaf/home/adaigle/DFESelfing/dfealpha_summary_unfolded.csv")
@@ -336,8 +321,10 @@ mutate(
       selfing == paste0("true", selfing_nums[6]) ~ "99% Selfing",
     )
   ) 
+
 posgrapesplot <- rbind(pos_voodoo_grapes2, df_truth_rep_self) %>%
-  filter(!grepl("true", selfing)) %>% 
+  filter(!grepl("alpha", selfing)) %>% 
+  #filter(!grepl("true", selfing)) %>% 
   filter(!grepl("error", selfing_class)) %>%
     mutate(selfing = recode(selfing,
      '0_grapes' =  'Inferred by GRAPES',
@@ -345,7 +332,13 @@ posgrapesplot <- rbind(pos_voodoo_grapes2, df_truth_rep_self) %>%
      '80_grapes' = 'Inferred by GRAPES',
      '90_grapes' = 'Inferred by GRAPES',
      '95_grapes' = 'Inferred by GRAPES',     
-     '99_grapes' = 'Inferred by GRAPES')) 
+     '99_grapes' = 'Inferred by GRAPES',     
+     'true0' = "Adjusted DFE",
+     'true50' = "Adjusted DFE",
+     'true80' = "Adjusted DFE",
+     'true90' = "Adjusted DFE",
+     'true95' = "Adjusted DFE",     
+     'true99' = "Adjusted DFE")) 
     #mutate(selfing = recode(selfing, #sfigure09 uses GRAPES, Figure07 uses Inferred by... 
     # '0_grapes' = 'GRAPES',
     # '50_grapes' = 'GRAPES',
@@ -356,19 +349,19 @@ posgrapesplot <- rbind(pos_voodoo_grapes2, df_truth_rep_self) %>%
 
 #plot gammaexpo results
 positive_grapes_plot <- ggplot(posgrapesplot, aes(x = generation, y = value, fill = factor(selfing, 
-    levels = c("truth", "true0", "Inferred by GRAPES", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
+    levels = c("truth", "true0", "Adjusted DFE", "Inferred by GRAPES", "true50", "50_grapes", "true80", "80_grapes", "true90", "90_grapes", "true95", "95_grapes", "true99", "99_grapes")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
   labs(x = "", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
-  scale_fill_manual(values = c("#404040", rep(c("purple"),6))) + 
-  theme(axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.text.x=element_text(size=15), axis.title.y=element_text(size=20), strip.text = element_text(size=12),
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
-  guides(fill=guide_legend(nrow=1, byrow=TRUE))+
-  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
-  
+  scale_fill_manual(values = c("#404040", rep(c("grey", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
+
 
 #### plotting adv muts using grapes_gammaexpo_summary
 # dividing mean by 2? I am assuming it is parameterized by 4Nes and I want it to match our 2NeS
@@ -439,17 +432,17 @@ positive_grapes_plot_alpha <- ggplot(alphaplot, aes(x=factor(truth_pred, levels=
   scale_fill_manual(values = c(rep(c("#404040", "purple"),6))) + 
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   expand_limits(y=c(0,1)) +
-  theme(axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.text.x=element_blank(), axis.title.y=element_text(size=20), strip.text = element_text(size=12),
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  theme(axis.text.y=element_text(size=12),
+  axis.title.x=element_text(size=0),axis.text.x=element_text(size=0), axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+  plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE))
 
 figure7 <- ggarrange(positive_grapes_plot, positive_grapes_plot_alpha,
                     labels = c("A", "B"),
-                    font.label = list(size = 24, color = "black", face = "bold", family = NULL),
+                    font.label = list(size = 20, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave(paste0(figures_dir, "figure7.svg"), plot = figure7, width = 8.5, height = 7.5, dpi = 600)
+ggsave(paste0(figures_dir, "figure7.svg"), plot = figure7, width = 8.5, height = 9, dpi =300)
 
 
 

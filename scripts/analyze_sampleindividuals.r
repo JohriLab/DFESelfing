@@ -550,11 +550,11 @@ figure <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfin
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values = c("#404040",rep(c("#F8766D", "purple"),3))) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), 
+    axis.title.x=element_text(size=15),axis.title.y=element_text(size=15), strip.text = element_text(size=15),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
-  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
 
 #SFS <- readRDS("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sample_individuals_sfs.rds")
 source(paste0(base_dir, "scripts/plot_SFS_sample_individuals.r"))
@@ -563,4 +563,4 @@ sfigure04 <- ggarrange(SFS, figure,
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = F, legend = "bottom")
-ggsave(paste0(figures_dir, "sfigure04.svg"), plot = sfigure04, width = 8.5, height = 10, dpi = 600)
+ggsave(paste0(figures_dir, "sfigure04.svg"), plot = sfigure04, width = 8.5, height = 10, dpi = 150)

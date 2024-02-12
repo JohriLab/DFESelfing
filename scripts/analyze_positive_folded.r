@@ -456,9 +456,9 @@ positive_grapes_plot_alpha <- ggplot(alphaplot, aes(x=factor(truth_pred, levels=
   scale_fill_manual(values = c(rep(c("#404040", "purple"),6))) + 
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   expand_limits(y=c(0,1)) +
-  theme(axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.text.x=element_blank(), axis.title.y=element_text(size=20), strip.text = element_text(size=15),
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  theme(axis.text.y=element_text(size=12),
+  axis.title.x=element_text(size=0),axis.text.x=element_text(size=0), axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+  plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE))
 
 #figure5 <- ggarrange(positive_grapes_plot, positive_grapes_plot_alpha,
@@ -672,11 +672,11 @@ comboplot <- ggplot(rbind(voodoo4, posgrapesplot), aes(x = generation, y = value
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values = c("#404040", rep(c("#F8766D", "purple"),6)))+ 
-  theme(axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.text.x=element_text(size=15), axis.title.y=element_text(size=20), strip.text = element_text(size=15),
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
-  guides(fill=guide_legend(nrow=1, byrow=TRUE))+
-  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
 
 sfigure11 <- ggarrange(comboplot, positive_grapes_plot_alpha,
                     labels = c("A", "B"),
@@ -684,4 +684,4 @@ sfigure11 <- ggarrange(comboplot, positive_grapes_plot_alpha,
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
 
-ggsave(paste0(figures_dir, "sfigure11.svg"), plot = sfigure11, width = 8.5, height = 10, dpi = 600)
+ggsave(paste0(figures_dir, "sfigure11.svg"), plot = sfigure11, width = 8.5, height = 9, dpi = 150)

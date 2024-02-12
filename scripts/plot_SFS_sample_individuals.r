@@ -189,7 +189,7 @@ SFS <- ggplot(plotting_df_99, aes(x = entry_number, y = prop, fill = factor(SFS)
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=12),
         legend.position = "bottom") +

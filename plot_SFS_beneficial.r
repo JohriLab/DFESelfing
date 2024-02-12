@@ -160,8 +160,8 @@ beneficial_1percent <- ggplot(plotting_df_0909599, aes(x = entry_number, y = pro
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
+        strip.text = element_text(size=15), plot.title= element_text(size=0), 
         legend.title = element_text(size=15), legend.text = element_text(size=15)) +
   #important addition to make x axis more readable
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
@@ -323,8 +323,8 @@ beneficial_01percent <- ggplot(plotting_df_0909599, aes(x = entry_number, y = pr
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
+        strip.text = element_text(size=15), plot.title= element_text(size=0), 
         legend.title = element_text(size=15), legend.text = element_text(size=15)) +
   #important addition to make x axis more readable
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
@@ -336,4 +336,4 @@ sfigure10 <- ggarrange(beneficial_01percent, beneficial_1percent,
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure10.svg", plot = sfigure10, width = 8.5, height = 10, dpi = 600)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure10.svg", plot = sfigure10, width = 8.5, height = 10, dpi = 150)

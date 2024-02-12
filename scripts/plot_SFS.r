@@ -289,17 +289,16 @@ figure3 <- ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = fa
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=20), axis.title.y=element_text(size=20), 
-        strip.text = element_text(size=15), plot.title= element_text(size=25), 
-        legend.title = element_text(size=15), legend.text = element_text(size=12),
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=12),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
+        strip.text = element_text(size=15), plot.title= element_text(size=0), 
+        legend.title = element_text(size=12), legend.text = element_text(size=12),
         legend.position = "bottom") +
   #important addition to make x axis more readable
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+"))
 
-ggsave(paste0(figures_dir, "figure3.svg"), plot = figure3, width = 8.5, height = 7, dpi = 600)
-
+ggsave(paste0(figures_dir, "figure3.svg"), plot = figure3, width = 8.5, height = 8, dpi = 300)
 
 #dominance experiment: h = 0.25
 domh025_dir <- paste0(sim_outputs_dir, "dom/hdel_0_25/SFS/")
@@ -406,7 +405,7 @@ hdel05_unlinked_figure <- ggplot(plotting_df_h05_unlinked_new, aes(x = entry_num
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   facet_grid(rows = vars(DFE)) +
   theme(axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
-        axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), 
+        axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15), 
         strip.text = element_text(size = 15), plot.title = element_text(size = 25), 
         legend.title = element_text(size = 15), legend.text = element_text(size = 15),
         legend.position = "bottom") +
@@ -419,15 +418,15 @@ hdel05_unlinked_neutral <- ggplot(plotting_df_h05_unlinked_neutral, aes(x = entr
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   #facet_grid(rows = vars(DFE)) +
   theme(axis.text.x = element_text(size = 15), axis.text.y = element_text(size = 15),
-        axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), 
-        strip.text = element_text(size = 15), plot.title = element_text(size = 25), 
+        axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 25), 
+        strip.text = element_text(size = 15), plot.title = element_text(size = 15), 
         legend.title = element_text(size = 15), legend.text = element_text(size = 15),
         legend.position = "bottom") +
   expand_limits(y = c(0, 0.7)) +
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                      labels = c(1, seq(5, 9, by = 5), "11+"))
 
-ggsave(paste0(figures_dir,"sfigure03.svg"), plot = hdel05_unlinked_figure, width = 8.5, height = 8.5, dpi = 600)
+ggsave(paste0(figures_dir,"sfigure03.svg"), plot = hdel05_unlinked_figure, width = 8.5, height = 8.5, dpi = 150)
 
 
 plotting_df_h05_linked <- plotting_df_05099 %>% 
@@ -457,7 +456,7 @@ dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_numb
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
 
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-        axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), 
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
         strip.text = element_text(size=15), plot.title= element_text(size=25), 
         legend.title = element_text(size=15), legend.text = element_text(size=15),
         legend.position = "bottom" ) +
@@ -466,4 +465,4 @@ dom_comp_fig_linked <- ggplot(plotting_linked_dom_comparison, aes(x = entry_numb
   scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
                        labels = c(1, seq(5, 9, by = 5), "11+")) +
   guides(fill = guide_legend(nrow = 2))
-ggsave(paste0(figures_dir,"sfigure07.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 600)
+ggsave(paste0(figures_dir,"sfigure08.svg"), plot = dom_comp_fig_linked, width = 8.5, height = 10, dpi = 150)

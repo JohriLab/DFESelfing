@@ -522,7 +522,7 @@ combo_plot <- bind_rows(voodoo3,voodoo3_grapes) %>%
      '99' = 'DFE-alpha', 
      '99_grapes' = 'GRAPES'))
 
-sfigure04 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
+sfigure02 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("truth", "DFE-alpha", "GRAPES","F_adjusted_0", "true0", 0, "0_grapes",
         "F_adjusted_50", "true50", 50, "50_grapes", "F_adjusted_80", "true80", 80, "80_grapes",
         "F_adjusted_90", "true90", 90, "90_grapes", "F_adjusted_95", "true95", 95, "95_grapes",
@@ -534,12 +534,14 @@ sfigure04 <- ggplot(combo_plot, aes(x = generation, y = value, fill = factor(sel
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   #scale_fill_manual(values = c("#404040", rep(c("#00BA38", "#619CFF", "#F8766D", "purple"),6))) + 
   scale_fill_manual(values = c("#404040",rep(c("#F8766D", "purple"),3))) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
-  axis.title.x=element_text(size=20),axis.title.y=element_text(size=20), strip.text = element_text(size=15),
-  plot.title= element_text(size=20), legend.position = "bottom", legend.text = element_text(size=12)) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), 
+    axis.title.x=element_text(size=15),axis.title.y=element_text(size=15), strip.text = element_text(size=15),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
-  scale_x_discrete(labels = c(~f[0], ~f[1], ~f[2], ~f[3]))
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3]))))
+
 #combo_plot <- combo_plot %>% mutate(intergenic=500)
 #write.csv(combo_plot, file="/nas/longleaf/home/adaigle/DFESelfing/intergenic_plot/int500.csv")
 #ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/sfigure04.svg", plot = sfigure04, width = 8.5, height = 8.5, dpi = 600)
-ggsave(paste0(figures_dir, "sfigure04.svg"), plot = sfigure04, width = 8.5, height = 8.5, dpi = 600)
+
+ggsave(paste0(figures_dir, "sfigure02.svg"), plot = sfigure02, width = 8.5, height = 8.5, dpi = 150)

@@ -537,6 +537,6 @@ ggplot(combo_plot, aes(x = generation, y = value, fill = factor(selfing,
   scale_fill_manual(values = c("#404040",rep(c("#F8766D", "purple"),3))) + 
   theme(legend.position="none", axis.text.x=element_text(size=15), axis.text.y=element_text(size=15),
   axis.title.x=element_text(size=25),axis.title.y=element_text(size=25), strip.text = element_text(size=15), plot.title= element_text(size=25))
-combo_plot <- combo_plot %>% mutate(intergenic=500)
+combo_plot <- combo_plot %>% mutate(intergenic=intergenic)
 write.csv(combo_plot, file=paste0(base_dir, "scripts/intergenic_plot/int", intergenic,".csv"))
 }
