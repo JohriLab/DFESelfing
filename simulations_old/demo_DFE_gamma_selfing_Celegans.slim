@@ -8,7 +8,7 @@
 //Average mutn rate: 3.3e-9 per site/gen; Assume that 25% of all mutations are neutral in coding regions.
 //Has a gamma shaped deleterious DFE.
 //To run:
-//slim -d d_seed=seed -d d_Ncur=5000 -d d_selfing_prob=0.99 -d d_beta=0.3 -d d_gamma_del=100 -d d_dom_del=0.5 -d d_f_pos=0.0 -d d_gamma_pos=0 -d d_dom_pos=0.5 -d "d_repID='replicate number'" -d "d_folder='folder name'" demo_DFE_gamma_selfing_Celegans.slim
+//slim -d d_seed=seed -d d_Ncur=5000 -d d_selfing_prob=0.99 -d d_beta=0.3 -d d_gamma_del=100 -d d_f_pos=0.0 -d d_gamma_pos=0 -d "d_repID='replicate number'" -d "d_folder='folder name'" demo_DFE_gamma_selfing_Celegans.slim
 
 initialize() {
     //setSeed(d_seed);
@@ -45,9 +45,9 @@ initialize() {
 
     //define the DFE:
     initializeMutationType("m1", 0.5, "f", 0.0); //neutral coding, 2Nes = [0,-1]
-    initializeMutationType("m2", d_dom_del, "g", -1.0*s_del, d_beta); //gamma distribution
+    initializeMutationType("m2", 0.5, "g", -1.0*s_del, d_beta); //gamma distribution
     initializeMutationType("m3", 0.5, "f", 0.0); //neutral intergenic, 2Nes = 0
-    initializeMutationType("m4", d_dom_pos, "e", s_pos); //beneficial class
+    initializeMutationType("m4", 0.5, "e", s_pos); //beneficial class
 
     // g1 genomic element type: uses m1 for all mutations
     initializeGenomicElementType("g1", m3, 1.0); //intergenic

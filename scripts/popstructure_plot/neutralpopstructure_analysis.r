@@ -5,7 +5,6 @@ library(tidyverse)
 data_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/neutralpopstructure2/"
 
 sub_dirs <- dir(data_dir)
-#sub_dirs <- c("Nem1_eqm_selfing0", "Nem2_eqm_selfing0", "Nem01_eqm_selfing99")
 
 parameter_table <- tibble(
     Nem= c(10,2,1,0.5,0.1),
@@ -46,4 +45,4 @@ csv <- right_join(summary_table, parameter_table, by="Nem") %>%
     summarize(across(where(is.numeric), list(avg = mean))) %>%
     select(Nem, selfing, meta_pi_exp_avg, meta_pi_avg, subpop_pi_exp_avg, subpop_pi_avg, fst_exp_avg, fst_avg)
 
-write.csv(csv, file = "/nas/longleaf/home/adaigle/DFESelfing/neutralpopstructure.csv", quote = F, row.names=F)
+#write.csv(csv, file = "/nas/longleaf/home/adaigle/DFESelfing/neutralpopstructure.csv", quote = F, row.names=F)

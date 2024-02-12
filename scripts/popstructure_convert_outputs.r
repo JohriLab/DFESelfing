@@ -1,4 +1,4 @@
-# the purpose of this script is to combine the outputs of the five 
+# the purpose of this script is to combine the outputs of five 
 #subpopulations into one output
 library(tidyverse)
 dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_2/"
@@ -9,9 +9,7 @@ string_pattern <- c("m1","m2")
 root_dir <-"/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/popstructure_uneven_2/"
 dirs <- paste0(root_dir, dir(root_dir))
 dirs <- dirs[24:45]
-#dirs <- dirs[!grepl("Nem05|Nem10", dirs)]
-#dirs <- dir()
-#dirs <- dir
+
 for (dir in dirs) {
 your_tibble <- tibble(
     filenames = paste0(outputs,pops,".txt"),
@@ -35,7 +33,6 @@ update_pop <- function(group) {
   # Filter the data for the current group and pop1
   pop_df_list <- list()
   for (i in 2:5) {
-    #print(i)
     p1 <- your_tibble %>%
       filter(outputs == group, pop == i) %>% 
       select(df)
@@ -60,7 +57,6 @@ update_pop <- function(group) {
       p1_df$V9[unique_id %in% df$V2] <- p1_df$V9[unique_id %in% df$V2] + df$V9[matching_rows]
   }}
     #print(length(p1_df))]
-    #append()
     pop_df_list <- c(pop_df_list, list(p1_df))
 
 }
@@ -68,7 +64,7 @@ update_pop <- function(group) {
       arrange(V2) %>% mutate(V1=V2) %>% distinct()
 
   #ensure no mutations are duplicated
-  #um(duplicated(unique_df$V2))
+  #sum(duplicated(unique_df$V2))
   return(unique_df)
 }
 
