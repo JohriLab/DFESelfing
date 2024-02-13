@@ -1,8 +1,8 @@
-# DFESelfing Project README
+# DFESelfing
 
 ## Overview
 
-This repository houses the code and files related to the paper titled *_Limitations of the inference of the distribution of fitness effects of new mutations in partially selfing populations with linkage_*, authored by Austin Daigle and Parul Johri. Find the preprint [here](https://www.biorxiv.org/content/10.1101/2024.02.06.579142v1).
+This repository houses the code and files related to the paper titled *_Limitations of the inference of the distribution of fitness effects of new mutations in partially selfing populations with linkage_*, by Austin Daigle and Parul Johri. Find the preprint [here](https://www.biorxiv.org/content/10.1101/2024.02.06.579142v1).
 
 ## Directories
 
