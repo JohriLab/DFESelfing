@@ -1,0 +1,94 @@
+//This script is to run a forward simulation with a deleterious DFE, a genome architecture, and different rates of selfing.
+//Chromosome 1 size: 15Mb; ~45% intergenic, 25% intronic, 30% coding.
+//ABout 1 gene per 5 kb. Each gene has 5 introns. 6 exons.
+//average exon length: 200bp, median: 123bp.
+//Median gene length: 2kb.
+//Intron size: mode:47bp, median - 65 bp. Can probably use 100.
+//Average rec rate for Chr 1: 3.12 cM/Mb
+//Average mutn rate: 3.3e-9 per site/gen; Assume that 25% of all mutations are neutral in coding regions.
+//Has a gamma shaped deleterious DFE.
+//To run:
+//slim -d d_seed=seed -d d_Ncur=5000 -d d_selfing_prob=0.99 -d d_beta=0.3 -d d_gamma_del=100 -d d_dom_del=0.5 -d d_f_pos=0.0 -d d_gamma_pos=0 -d d_dom_pos=0.5 -d "d_repID='replicate number'" -d "d_folder='folder name'" demo_DFE_gamma_selfing_Celegans.slim
+
+initialize() {
+    //setSeed(d_seed);
+
+    //set genome structure parameters:
+    inter_len = 3000;
+    intron_len = 100;
+    exon_len = 250;
+    num_genes = 500; //3000 for the full chromosome
+    num_exons = 6;
+    num_introns = 5;
+    full_block_len = inter_len + exon_len*num_exons + intron_len*num_introns;
+    exon_block_len = exon_len + intron_len;
+    
+    //define pop gen parameters:
+    defineConstant("Na", 5000);
+    defineConstant("scaling_factor", 500000/5000);
+    defineConstant("Nc", d_Ncur);
+    defineConstant("mut_rate_mean", scaling_factor*3.3e-9);
+    defineConstant("rec_rate_mean", 0.005*scaling_factor*3.12*1e-8);
+    defineConstant("f_neu", 0.25);//fraction of neutral mutations in coding regions
+    defineConstant("gamma_del", d_gamma_del);
+    defineConstant("s_del", gamma_del/(2.0*Na));
+    defineConstant("gamma_pos", d_gamma_pos);
+    defineConstant("s_pos", gamma_pos/(2.0*Na));
+    print("mean strength of selection: " + s_pos);
+    defineConstant("f_pos", d_f_pos);//fraction of beneficial mutations
+    defineConstant("f_del", (1.0-f_pos-f_neu));//fraction of all deleterious classes
+    print("fraction of all deleterious mutations: " + f_del);
+    print("fraction of beneficial mutations: " + f_pos);
+    
+    // set the overall mutation rate map
+    initializeMutationRate(mut_rate_mean);
+
+    //define the DFE:
+    initializeMutationType("m1", 0.5, "f", 0.0); //neutral coding, 2Nes = [0,-1]
+    initializeMutationType("m2", d_dom_del, "g", -1.0*s_del, d_beta); //gamma distribution
+    initializeMutationType("m3", 0.5, "f", 0.0); //neutral intergenic, 2Nes = 0
+    initializeMutationType("m4", d_dom_pos, "e", s_pos); //beneficial class
+
+    // g1 genomic element type: uses m1 for all mutations
+    initializeGenomicElementType("g1", m3, 1.0); //intergenic
+    initializeGenomicElementType("g2", m3, 1.0); //intronic
+    initializeGenomicElementType("g3", c(m1, m2, m4), c(f_neu, 1.0-f_neu-f_pos, f_pos)); //exons, selected.
+
+    //defining genes
+    for (index_a in 0:(num_genes-1)){
+        //print (index1);
+        initializeGenomicElement(g1, (index_a*full_block_len), (index_a*full_block_len + inter_len-1)); //intergenic
+        for (index_b in 0:(num_introns-1)){
+            //print (index_a);
+            //print (index_b);
+            initializeGenomicElement(g3, ((index_a*full_block_len) + inter_len + (index_b*exon_block_len)), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len - 1));//exon
+            initializeGenomicElement(g2, (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len), (index_a*full_block_len + inter_len + index_b*exon_block_len + exon_len + intron_len-1));//intron
+            }
+        initializeGenomicElement(g3, (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len), (index_a*full_block_len + inter_len + (index_b+1)*exon_block_len + exon_len - 1));//closing with exon
+        }
+    initializeGenomicElement(g1, full_block_len*num_genes, full_block_len*num_genes + inter_len - 1);//extra intergenic towards the end
+    
+    //constant recombination along the chromosome:
+    initializeRecombinationRate(rec_rate_mean);
+}
+1 early() {
+    sim.addSubpop("p1", Na);
+    //set the rate of selfing                                                   
+    p1.setSelfingRate(d_selfing_prob);
+}
+50000 early() {
+    print("N at end of burn-in: " + p1.individualCount);
+    //add any population size changes here if needed
+    //newSize = Nc;
+    //p1.setSubpopulationSize(asInteger(newSize));
+}
+70000 late(){
+    sampledGen = sample(p1.genomes, 100, replace=F);
+    sampledGen.output(filePath=d_folder + "/output" + d_repID + ".txt", append=F);
+    sampledGen.outputMS(filePath=d_folder + "/output" + d_repID + ".ms", append=F);
+    sim.outputFixedMutations(filePath=d_folder + "/output" + d_repID + ".fixed", append=F);
+    print("N at the end of simulation: " + p1.individualCount);
+    print("The last base in the chromosome: " + sim.chromosome.lastPosition);
+}
+
+

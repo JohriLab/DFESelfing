@@ -1,13 +1,29 @@
-# DFESelfing
+# DFESelfing Project README
 
->>Total number of neutral and selected sites in exons:\
-Number of neutral sites = Number of genes simulated (500) x Number of exons per gene (6) x exon length (250) x Proportion of neutral mutations (0.25)\
-Number of selected sites = Number of genes simulated (500) x Number of exons per gene (6) x exon length (250) x Proportion of selected mutations (0.75)\
+## Overview
 
->>SFS.zip\
-Has the SFS for simulations performed for 3 different DFEs - DFE1, DFE2, DFE3.\
-*_m1_count.sfs files have the neutral SFS for classes 1/100 to 99/100.\
-*_m1_count.fixed files have the number of fixed neutral alleles, which is equivalent to the 100/100 class.\
-*_m2_count.sfs files have the selected SFS for classes 1/100 to 99/100.\
-*_m2_count.fixed files have the number of fixed selected alleles, which is equivalent to the 100/100 class.\
+This repository houses the code and files related to the paper titled *_Limitations of the inference of the distribution of fitness effects of new mutations in partially selfing populations with linkage_*, authored by Austin Daigle and Parul Johri. Find the preprint [here](https://www.biorxiv.org/content/10.1101/2024.02.06.579142v1).
 
+## Directories
+
+
+
+### 1. simulations
+
+This directory contains slim scripts as well as slurm scripts used to launch all simulations. 
+
+### 2. calculateSFS
+
+This directory contains scripts to calculate neutral and selected site frequency spectra using simulation outputs. 
+
+### 3. launch_DFE_programs
+
+This directory contains scripts used to prepare config files and SLURM scripts to run DFE-alpha and GRAPES using the SFS. 
+
+### 4. scripts
+
+The scripts directory contains code used for the analysis of DFE programs and the production of figures for the paper. 
+
+### 5. figures
+
+This directory contains the paper's figures, in SVG format.
