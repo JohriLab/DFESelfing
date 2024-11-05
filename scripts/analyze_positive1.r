@@ -645,3 +645,4 @@ sfigure09 <- ggarrange(comboplot, positive_grapes_plot_alpha,
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
 ggsave(paste0(figures_dir, "sfigure09.svg"), plot = sfigure09, width = 8.5, height = 9, dpi = 150)
+ggsave(paste0(figures_dir, "sfigure09_poster.svg"), plot = sfigure09, width = 7.5, height = 9, dpi =300, unit="in")

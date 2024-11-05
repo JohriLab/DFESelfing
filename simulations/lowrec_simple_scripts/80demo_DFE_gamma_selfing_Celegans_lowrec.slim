@@ -9,6 +9,33 @@
 //Has a gamma shaped deleterious DFE.
 //To run:
 //slim -d d_seed=seed -d d_Ncur=5000 -d d_selfing_prob=0.99 -d d_beta=0.3 -d d_gamma_del=100 -d d_dom_del=0.5 -d d_f_pos=0.0 -d d_gamma_pos=0 -d d_dom_pos=0.5 -d "d_repID='replicate number'" -d "d_folder='folder name'" demo_DFE_gamma_selfing_Celegans.slim
+function (string)write_ms_file(object sampled_genomes, string f_m1, string f_m2)
+    {
+    writeFile(filePath=f_m1, contents="//", append = F);
+    writeFile(filePath=f_m2, contents="//", append = F);
+    // get the unique mutations in the sample, sorted by position
+    m_m1 = sortBy(unique(sampled_genomes.mutationsOfType(m1)), "position");
+    m_m2 = sortBy(unique(sampled_genomes.mutationsOfType(m2)), "position");
+    // print the number of segregating sites
+    writeFile(filePath=f_m1, contents=paste("segsites: " + size(m_m1)), append = T);
+    writeFile(filePath=f_m2, contents=paste("segsites: " + size(m_m2)), append = T);
+
+    // print the positions
+    positions_m1 = format("%.15f", m_m1.position / sim.chromosome.lastPosition);
+    positions_m2 = format("%.15f", m_m2.position / sim.chromosome.lastPosition);
+    writeFile(filePath=f_m1, contents="positions: " + paste(positions_m1, sep=" "), append = T);
+    writeFile(filePath=f_m2, contents="positions: " + paste(positions_m2, sep=" "), append = T);
+    
+    // print the sampled genomes
+    for (genome in sampled_genomes)
+        {
+        hasMuts_m1 = (match(m_m1, genome.mutations) >= 0);
+        writeFile(filePath=f_m1, contents=paste(asInteger(hasMuts_m1), sep=""), append = T);
+        hasMuts_m2 = (match(m_m2, genome.mutations) >= 0);
+        writeFile(filePath=f_m2, contents=paste(asInteger(hasMuts_m2), sep=""), append = T);
+        }
+    return (paste(f_m1, "and", f_m2, "written", sep=" "));                                    
+    }
 
 initialize() {
     //setSeed(d_seed);
@@ -86,6 +113,9 @@ initialize() {
     sampledGen = sample(p1.genomes, 100, replace=F);
     sampledGen.output(filePath=d_folder + "/output" + d_repID + ".txt", append=F);
     sampledGen.outputMS(filePath=d_folder + "/output" + d_repID + ".ms", append=F);
+    result_m1 = paste0(d_folder, "/output", d_repID , "_neutral.ms");
+    result_m2 = paste0(d_folder, "/output", d_repID , "_selected.ms");
+    write_ms_file(sampledGen, result_m1, result_m2);
     sim.outputFixedMutations(filePath=d_folder + "/output" + d_repID + ".fixed", append=F);
     print("N at the end of simulation: " + p1.individualCount);
     print("The last base in the chromosome: " + sim.chromosome.lastPosition);

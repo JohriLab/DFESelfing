@@ -299,6 +299,7 @@ figure3 <- ggplot(plotting_df_0909599, aes(x = entry_number, y = prop, fill = fa
                        labels = c(1, seq(5, 9, by = 5), "11+"))
 
 ggsave(paste0(figures_dir, "figure3.svg"), plot = figure3, width = 8.5, height = 8, dpi = 300)
+ggsave(paste0(figures_dir, "figure3_poster.png"), plot = figure3, width = 8.5, height = 9, dpi = 300, units="in")
 
 #dominance experiment: h = 0.25
 domh025_dir <- paste0(sim_outputs_dir, "dom/hdel_0_25/SFS/")

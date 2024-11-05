@@ -16,7 +16,7 @@ declare -i repID=0+$SLURM_ARRAY_TASK_ID
 
 module load slim/4.0.1
 
-cd /nas/longleaf/home/adaigle/simulate_DFEs/lowrec_simple_scripts
+cd /nas/longleaf/home/adaigle/DFESelfing/simulations/lowrec_simple_scripts
 echo "starting simulation " $repID
 folder="/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/lowrec_simple/"
                                                  

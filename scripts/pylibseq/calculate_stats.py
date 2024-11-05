@@ -24,6 +24,8 @@ parser.add_argument('-binSize', dest = 'binSize', action='store', nargs = 1, def
 
 #parser.add_argument('-output_prefix', dest = 'output_prefix', action='store', nargs = 1, type = str, help = 'full path to output file')
 args = parser.parse_args()
+print(args.allele_freq_filter)
+
 masking_status = args.masking_status[0]
 chr_len =  args.regionLen[0]
 win_size = args.winSize[0]/float(chr_len)
@@ -33,6 +35,9 @@ outfolder = args.output_folder[0]
 allele_freq_filter = args.allele_freq_filter[0]
 #prefix = args.output_prefix[0]
 bin_size = int(args.binSize[0])
+#bin_size = args.binSize[0]
+#bin_size = args.binSize
+
 print(type(bin_size))
 #clean up allele freq list
 allele_freq_filter = [int(x) for x in allele_freq_filter if x.isdigit()]
@@ -133,9 +138,11 @@ for prefix in directories:
         for j in ["neutral", "selected"]:
             #print(j)
             current_output = "output" + str(output) + "_" + j
-            #print(current_output)
+            print(infolder + "/" + prefix + "/" + current_output + ".ms", 'r')
             f_ms = open(infolder + "/" + prefix + "/" + current_output + ".ms", 'r')
+            #print(f_ms)
             #S = get_S(f_ms)
+            #exit()
             l_Pos = [] #list of positions of SNPs
             l_Genos = [] #list of alleles
             d_tmp = {}
@@ -170,11 +177,13 @@ for prefix in directories:
             #assign object
             sd = libsequence.SimData(l_data)
             #print(sd)
+            #exit()
             # filter allele freqs based on provided parameter. Ex. if ==1, only analyze doubletons
             #allele_freq_filter = [1,2,3,4,5]
-            if allele_freq_filter != 0:
+            if allele_freq_filter != [0]:
                 sd = libsequence.removeColumns(sd,lambda x : x.one in allele_freq_filter)
                 #print(sd)
+                
             #sd.assign(l_Pos[10:100],l_Genos[10:100]
             #define sliding windows:
             w = libsequence.Windows(sd,window_size=win_size,step_len=step_size,starting_pos=0.0,ending_pos=1.0)

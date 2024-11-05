@@ -3,9 +3,10 @@ library(ggplot2)
 library(ggpubr)
 
 #df <- read.table("/nas/longleaf/home/adaigle/DFESelfing/pylibseq/allresults_window_5000_1,2,3,4,5BinSize50.stats", header=F, skip=1)
-df <- read.table("/nas/longleaf/home/adaigle/DFESelfing/pylibseq/allresults_window_5000_1,2,3,4,5BinSize500.stats", header=F, skip=1)
+#df <- read.table("/nas/longleaf/home/adaigle/DFESelfing/pylibseq/allresults_window_5000_1,2,3,4,5BinSize500.stats", header=F, skip=1)
+df <- read.table("/nas/longleaf/home/adaigle/DFESelfing/scripts/pylibseq/lowrec/allresults_window_5000_1,2,3,4,5BinSize5000.stats", header=F, skip=1)
 
-gammabeta <- read.csv("/nas/longleaf/home/adaigle/DFESelfing/pylibseq/gammabeta.csv")
+gammabeta <- read.csv("/nas/longleaf/home/adaigle/DFESelfing_unused_analyses/pylibseq/gammabeta.csv")
 length_dist_cols <- length(names(df))-15
 header <- c("filename","output","site","posn","S","thetapi","thetaw","thetah","hprime","tajimasd","numSing","hapdiv",1:length_dist_cols,"rsq","D","Dprime")
 #header <- c("filename","output","site","posn","S","thetapi","thetaw","thetah","hprime","tajimasd","numSing","hapdiv","rsq","D","Dprime")
@@ -23,7 +24,7 @@ for (col_name in columns_to_process) {
 }
 #unique(df[c(1:3,270:273)])
 df <- df %>% mutate(
-    selfing = as.numeric(str_extract(filename, "(?<=eqm_selfing)\\d+")),
+    selfing = as.numeric(str_extract(filename, "(?<=eqm_lowrec)\\d+")),
     DFE = str_extract(filename, "(DFE)\\d+")
     ) %>% group_by(selfing, DFE)
   
@@ -274,5 +275,6 @@ plot_dist_d("DFE3", 50)
 plot_dist_d("DFE3", 99)
 
 #write.csv(summarize_df, file="/nas/longleaf/home/adaigle/DFESelfing/pylibseq/freq1_5.csv")
-write.csv(summarize_df, file="/nas/longleaf/home/adaigle/DFESelfing/pylibseq/freq1_5_500bin.csv")
+#write.csv(summarize_df, file="/nas/longleaf/home/adaigle/DFESelfing/pylibseq/freq1_5_500bin.csv")
 
+write.csv(summarize_df, file="/nas/longleaf/home/adaigle/DFESelfing/scripts/pylibseq/freq1_5_lowrec.csv")

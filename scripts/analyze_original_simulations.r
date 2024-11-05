@@ -536,7 +536,7 @@ figure1 <- ggarrange(dfealpha_rainbow, grapes_rainbow,
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave(paste0(figures_dir, "figure1.pdf"), plot = figure1, width = 8.5, height = 8.5, dpi = 300)
+#ggsave(paste0(figures_dir, "figure1.pdf"), plot = figure1, width = 8.5, height = 8.5, dpi = 300)
 
 voodoo_grapes2 <- voodoo_grapes %>%
     mutate(selfing = case_when(
@@ -635,13 +635,13 @@ combo_plot_with_Badjusted <- bind_rows(voodoo3,voodoo3_grapes) %>%
 Badjusted <- ggplot(combo_plot_with_Badjusted, aes(x = generation, y = value, fill = factor(selfing, 
     levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
   geom_bar(stat = "identity", position = "dodge", colour = "black") +
-  labs(title = "DFEalpha and Grapes ", x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
   geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
   expand_limits(y=c(0,1)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
   theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
-    axis.title.x=element_text(size=0),axis.title.y=element_text(size=15), strip.text = element_text(size=13),
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
     plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
   guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
   scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
@@ -649,9 +649,71 @@ Badjusted <- ggplot(combo_plot_with_Badjusted, aes(x = generation, y = value, fi
     aes(label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
     vjust = -0.5, hjust=0.25, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
 
+combo_plot_with_Badjusted_99only_DFE1 <- combo_plot_with_Badjusted %>% filter(selfing_class=="99% Selfing" & DFE=="DFE1")
+B_value_table_99only_DFE1 <- B_value_table %>% filter(selfing_class=="99% Selfing" & DFE=="DFE1")
 
+Badjusted_DFE1_99 <- ggplot(combo_plot_with_Badjusted_99only_DFE1, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table_99only_DFE1, 
+    aes(x=2.5, label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.5, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
 
-ggsave(paste0(figures_dir, "figure1.svg"), plot = Badjusted, width = 8.5, height = 7.5, dpi = 300)
+combo_plot_with_Badjusted_99only_DFE2 <- combo_plot_with_Badjusted %>% filter(selfing_class=="99% Selfing" & DFE=="DFE2")
+B_value_table_99only_DFE2 <- B_value_table %>% filter(selfing_class=="99% Selfing" & DFE=="DFE2")
+Badjusted_DFE2_99 <- ggplot(combo_plot_with_Badjusted_99only_DFE2, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table_99only_DFE2, 
+    aes(x=2.5, label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.5, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
+
+combo_plot_with_Badjusted_99only_DFE3 <- combo_plot_with_Badjusted %>% filter(selfing_class=="99% Selfing" & DFE=="DFE3")
+B_value_table_99only_DFE3 <- B_value_table %>% filter(selfing_class=="99% Selfing" & DFE=="DFE3")
+Badjusted_DFE3_99 <- ggplot(combo_plot_with_Badjusted_99only_DFE3, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table_99only_DFE3, 
+    aes(x=2.5, label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.5, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
+
+saveRDS(Badjusted_DFE1_99, "/nas/longleaf/home/adaigle/DFESelfing/scripts/summary_figures/DFE1_estimate.rds")
+saveRDS(Badjusted_DFE2_99, "/nas/longleaf/home/adaigle/DFESelfing/scripts/summary_figures/DFE2_estimate.rds")
+saveRDS(Badjusted_DFE3_99, "/nas/longleaf/home/adaigle/DFESelfing/scripts/summary_figures/DFE3_estimate.rds")
+
+#ggsave(paste0(figures_dir, "figure1.svg"), plot = Badjusted, width = 8.5, height = 7.5, dpi = 300)
+
+#ggsave(paste0(figures_dir, "figure1_poster.png"), plot = Badjusted, width = 10.5, height = 9, dpi = 300, units="in")
 
 #combo_plot <- combo_plot %>% mutate(dominance=0.5)
 combo_plot_int <- combo_plot %>% mutate(intergenic=3000)
@@ -814,4 +876,9 @@ sfigure01 <- ggarrange(gamma_accuracy, beta_accuracy,
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
-ggsave(paste0(figures_dir, "sfigure01.svg"), plot = sfigure01, width = 8.5, height = 9.5, dpi = 150)
+#ggsave(paste0(figures_dir, "sfigure01.svg"), plot = sfigure01, width = 8.5, height = 9.5, dpi = 150)
+
+combo_plot_scale <- combo_plot_with_Badjusted %>% mutate(scale=100)
+B_value_table_scale <- B_value_table %>% mutate(scale=100)
+#write.csv(combo_plot_scale, file=paste0(base_dir, "scripts/scaling/q100.csv"))
+#write.csv(B_value_table_scale, file=paste0(base_dir, "scripts/scaling/q100_B.csv"))

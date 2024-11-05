@@ -7,7 +7,7 @@ base_dir <- "/nas/longleaf/home/adaigle/DFESelfing/"
 source(paste0(base_dir, "scripts/calculate_pi_lowrec.r"))
 
 figures_dir <- paste0(base_dir, "figures_for_publication/")
-dfe_results_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/lowrec_simple/dfe_results/"
+dfe_results_dir <- "/nas/longleaf/home/adaigle/work/johri_elegans/sim_outputs/lowrec_simple_paper/dfe_results/"
 dfealpha_dir <- paste0(dfe_results_dir, "dfealpha/")
 dfealpha_output_dirs <- paste(paste(dfealpha_dir, dir(dfealpha_dir, pattern = "DFE_alpha_output"), sep = ""),
     "/", dir(
@@ -259,6 +259,8 @@ prediction_accuracy_table <- dataframe_of_truth3 %>%
     deltaNe = selfing_Ne - empirical_Ne,
     newNE = 5000 - deltaNe,
     newNegamma = (newNE/5000) * true_mean) %>% group_by(DFE,selfing)
+
+write.csv(prediction_accuracy_table, file="/nas/longleaf/home/adaigle/DFESelfing/scripts/pylibseq/gammabeta_lowrec.csv", quote=F)
 
 
 
@@ -666,3 +668,67 @@ figure2 <- ggplot(combo_plot_with_Badjusted, aes(x = generation, y = value, fill
     vjust = -0.5, hjust=0.25, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
 
 ggsave(paste0(figures_dir, "figure2.svg"), plot = figure2, width = 8.5, height = 7.5, dpi = 300)
+
+#ggsave(paste0(figures_dir, "figure2_poster.png"), plot = figure2, width = 10.5, height = 9, dpi = 300, units="in")
+
+combo_plot_with_Badjusted_99only_DFE1 <- combo_plot_with_Badjusted %>% filter(selfing_class=="0.001x" & DFE=="DFE1")
+B_value_table_99only_DFE1 <- B_value_table %>% filter(selfing_class=="0.001x" & DFE=="DFE1")
+
+Badjusted_DFE1_99 <- ggplot(combo_plot_with_Badjusted_99only_DFE1, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table_99only_DFE1, 
+    aes(x=2.5, label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.5, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
+
+combo_plot_with_Badjusted_99only_DFE2 <- combo_plot_with_Badjusted %>% filter(selfing_class=="0.001x" & DFE=="DFE2")
+B_value_table_99only_DFE2 <- B_value_table %>% filter(selfing_class=="0.001x" & DFE=="DFE2")
+Badjusted_DFE2_99 <- ggplot(combo_plot_with_Badjusted_99only_DFE2, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table_99only_DFE2, 
+    aes(x=2.5, label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.5, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
+
+combo_plot_with_Badjusted_99only_DFE3 <- combo_plot_with_Badjusted %>% filter(selfing_class=="0.001x" & DFE=="DFE3")
+B_value_table_99only_DFE3 <- B_value_table %>% filter(selfing_class=="0.001x" & DFE=="DFE3")
+Badjusted_DFE3_99 <- ggplot(combo_plot_with_Badjusted_99only_DFE3, aes(x = generation, y = value, fill = factor(selfing, 
+    levels = c("Simulated DFE", "Adjusted DFE", "DFE-alpha", "GRAPES")))) +
+  geom_bar(stat = "identity", position = "dodge", colour = "black") +
+  labs(x = "Mutation Class (least to most deleterious)", y = "proportion of mutations", fill = "") +
+  geom_errorbar(aes(ymin = value - sd, ymax = value + sd), position = position_dodge(width = 0.9)) +
+  expand_limits(y=c(0,1)) +
+  facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
+  scale_fill_manual(values = c("#404040", rep(c("grey", "#F8766D", "purple"),6))) + 
+  theme(axis.text.x=element_text(size=12), axis.text.y=element_text(size=12), 
+    axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=13),
+    plot.title= element_text(size=0), legend.position = "bottom", legend.text = element_text(size=12)) +
+  guides(fill=guide_legend(nrow=1, byrow=TRUE)) +
+  scale_x_discrete(labels = c(expression(italic(f[0])), expression(italic(f[1])), expression(italic(f[2])), expression(italic(f[3])))) +
+  geom_text(data = B_value_table_99only_DFE3, 
+    aes(x=2.5, label = paste("B = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
+    vjust = -0.5, hjust=0.5, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
+
+saveRDS(Badjusted_DFE1_99, "/nas/longleaf/home/adaigle/DFESelfing/scripts/summary_figures/DFE1_estimate_lowrec.rds")
+saveRDS(Badjusted_DFE2_99, "/nas/longleaf/home/adaigle/DFESelfing/scripts/summary_figures/DFE2_estimate_lowrec.rds")
+saveRDS(Badjusted_DFE3_99, "/nas/longleaf/home/adaigle/DFESelfing/scripts/summary_figures/DFE3_estimate_lowrec.rds")
