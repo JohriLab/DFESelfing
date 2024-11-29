@@ -99,4 +99,7 @@ sfigure13 <- ggarrange(Nem2_plt, Nem1_plt, Nem05_plt, Nem01_plt,
 
 
 ggsave(paste0(figures_dir, "figure8.svg"), plot = Nem01_allsamplings_plt, width = 8.5, height = 8.5, dpi = 300)
+ggsave(paste0(figures_dir, "new_figure7.jpg"), plot = Nem01_allsamplings_plt, width = 8.5, height = 8.5, dpi = 300)
+ggsave(paste0(figures_dir, "new_figure7.tiff"), plot = Nem01_allsamplings_plt, width = 8.5, height = 8.5, dpi = 300)
+
 ggsave(paste0(figures_dir, "sfigure13.svg"), plot = sfigure13, width = 8.5, height = 9, dpi = 150)

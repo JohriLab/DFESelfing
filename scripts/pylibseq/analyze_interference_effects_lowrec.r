@@ -906,7 +906,7 @@ regress_stat_B_allDFEs <- function(df, stat, y_label) {
   scale_color_manual(values=c("blue", "red", "dark green", "#619CFF", "#F8766D",  "green")) + 
   theme(axis.text.x=element_text(size=10), axis.text.y=element_text(size=12),
   axis.title.x=element_text(size=12),axis.title.y=element_text(size=12), strip.text = element_text(size=15), 
-  plot.title= element_text(size=0), legend.title = element_blank(), legend.text = element_text(size=12),
+  plot.title= element_text(size=0), legend.title = element_blank(), legend.text = element_text(size=10),
   legend.position = "bottom", legend.spacing.x = unit(0.5, 'cm'))
 }
 
@@ -945,3 +945,5 @@ error_plot_fig <- ggarrange(
   common.legend = T, legend = "bottom")
 
 ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/revisionfigure1.svg", plot = error_plot_fig, width = 8.5, height = 8.5, dpi = 150)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/new_figure3.jpg", plot = error_plot_fig, width = 8.5, height = 8.5, dpi = 300, bg = "white")
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/new_figure3.tiff", plot = error_plot_fig, width = 8.5, height = 8.5, dpi = 300, bg = "white")

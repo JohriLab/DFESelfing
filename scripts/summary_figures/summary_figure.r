@@ -93,6 +93,11 @@ figure <- ggarrange(
 ggsave(paste0(figures_dir, "new_figure_01.svg"), plot = f1, width = 8.5, height = 8.5, dpi = 150)
 ggsave(paste0(figures_dir, "new_figure_02.svg"), plot = f4, width = 8.5, height = 8.5, dpi = 150)
 
+ggsave(paste0(figures_dir, "new_figure_01.jpg"), plot = f1, width = 8.5, height = 8.5, dpi = 300)
+ggsave(paste0(figures_dir, "new_figure_02.jpg"), plot = f4, width = 8.5, height = 8.5, dpi = 300)
+
+ggsave(paste0(figures_dir, "new_figure_01.tiff"), plot = f1, width = 8.5, height = 8.5, dpi = 300, bg = "white")
+ggsave(paste0(figures_dir, "new_figure_02.tiff"), plot = f4, width = 8.5, height = 8.5, dpi = 300, bg = "white")
 #ggsave(paste0(figures_dir, "new_figure_02.png"), plot = f4, width = 10, height = 8.5, dpi = 150)
 #ggsave(paste0(figures_dir, "sfigure01.svg"), plot = sfigure01, width = 8.5, height = 9.5, dpi = 150)
 #ggsave(paste0(figures_dir, "sfigure01.svg"), plot = sfigure01, width = 8.5, height = 9.5, dpi = 150)

@@ -235,6 +235,9 @@ figure4_rsq <- ggarrange(DFE1_brian, DFE1_rsq, DFE2_brian, DFE2_rsq, DFE3_brian,
                     ncol = 2, nrow = 3,
                     common.legend = TRUE, legend = "bottom", hjust=0)
 
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/new_figure5.jpg", plot = figure4, width = 8.5, height = 8.5, dpi = 300)
+ggsave("/nas/longleaf/home/adaigle/DFESelfing/figures_for_publication/new_figure5.tiff", plot = figure4, width = 8.5, height = 8.5, dpi = 300, bg = "white")
+
 
 df_long_s <- gammabeta_propersd %>%
   pivot_longer(cols = c(s_dfealpha_avg, s_dfealpha_sd, s_grapes_avg, s_grapes_sd), 

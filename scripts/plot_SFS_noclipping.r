@@ -377,29 +377,29 @@ clipped_DFEs <- ggplot(plotting_df_0909599_DFE2, aes(x = entry_number, y = prop,
   geom_bar(stat = "identity", position = "dodge", colour = "black", aes(group = interaction(SFS, selfing))) +
   #geom_smooth(method = "auto", se = T) +
   #scale_y_log10() +
-  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
+  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type ") +
   geom_errorbar(aes(ymin = prop - propsd, ymax = prop + propsd), position = position_dodge(width = 0.9)) +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   #scale_x_continuous(breaks = seq(1, max(plotting_df_0909599$entry_number), by = 9), 
   #                   labels = seq(1, max(plotting_df_0909599$entry_number), by = 9)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=12),
-        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=11),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=12, margin = margin(r = 5)), 
         strip.text = element_text(size=15), plot.title= element_text(size=0), 
-        legend.title = element_text(size=12), legend.text = element_text(size=12),
-        legend.position = "bottom") +
+        legend.title = element_text(size=11), legend.text = element_text(size=11),
+        legend.position = "bottom", legend.spacing.x = unit(0.3, "cm")) +
   #important addition to make x axis more readable
-  scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 11),
+  scale_x_continuous(breaks = c(1, seq(5, 9, by = 5), 12),
                        labels = c(1, seq(5, 9, by = 5), "11+"))
 
 log_dfes <- ggplot(plotting_df_0909599_2_DFE2, aes(x = entry_number, y = prop, fill = factor(SFS))) +
   geom_smooth(method = "auto", se = T, color = "black") +
   scale_y_log10() +
-  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type") +
+  labs(x = "Derived allele count", y = "Proportion of polymorphisms", fill = "Site type ") +
   facet_grid(rows = vars(DFE), cols = vars(selfing_class)) +
   scale_fill_manual(values=c("#619CFF", "#F8766D")) + 
-  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=12),
-        axis.title.x=element_text(size=15), axis.title.y=element_text(size=15), 
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=11),
+        axis.title.x=element_text(size=15), axis.title.y=element_text(size=12, margin = margin(r = 5)), 
         strip.text = element_text(size=15), plot.title= element_text(size=0), 
         legend.title = element_text(size=12), legend.text = element_text(size=12),
         legend.position = "bottom") +
@@ -408,12 +408,16 @@ log_dfes <- ggplot(plotting_df_0909599_2_DFE2, aes(x = entry_number, y = prop, f
                        labels = c(1, 50, 99))
 
 
-figure <- ggarrange(clipped_DFEs, log_dfes,
+figure <- ggarrange(clipped_DFEs+ 
+  theme(        plot.background = element_rect(fill = "white", color = NA)), log_dfes+ 
+  theme(        plot.background = element_rect(fill = "white", color = NA)),
                     labels = c("A", "B"),
                     font.label = list(size = 24, color = "black", face = "bold", family = NULL),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom", vjust=1) 
 ggsave(paste0(figures_dir, "figure3.svg"), plot = figure, width = 8.5, height = 8, dpi = 300)
+ggsave(paste0(figures_dir, "new_figure4.jpg"), plot = figure, width = 8.5, height = 8, dpi = 300)
+ggsave(paste0(figures_dir, "new_figure4.tiff"), plot = figure, width = 8.5, height = 9, dpi = 300, bg = "white")
 
 plotting_df_0909599_DFE1 <- plotting_df_0909599 %>% filter(DFE=="DFE1") %>% 
     filter(selfing != 80 & selfing != 50)

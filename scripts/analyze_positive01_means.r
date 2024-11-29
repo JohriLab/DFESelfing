@@ -398,10 +398,10 @@ positive_grapes_plot <- ggplot(posgrapesplot_noadjusted, aes(x = generation, y =
                               expression(10^-3 * "-" * 10^-2),
                               expression(10^-2 * "-" * infinity))) +
   geom_text(data = B_value_table, 
-    aes(label = paste("π/π₀ = ", format(round(B_avg, 2), nsmall = 2, digits = 2))), 
-    vjust = -0.5, hjust=0.25, size = 4, position = position_dodge(width = 0.9), fontface="italic") 
-
-
+            aes(label = paste("pi / pi[0] == ", format(round(B_avg, 2), nsmall = 2, digits = 2))),
+            vjust = -0.5, hjust = 0.25, size = 4, position = position_dodge(width = 0.9), 
+            fontface = "italic", parse = TRUE)
+            
 #### plotting adv muts using grapes_gammaexpo_summary
 # dividing mean by 2? I am assuming it is parameterized by 4Nes and I want it to match our 2NeS
 ggplot(grapes_gammaexpo_summary, aes(x = DFE, y = GammaExpo.posGmean_avg/2, fill = selfing)) +
@@ -478,12 +478,66 @@ positive_grapes_plot_alpha <- ggplot(alphaplot, aes(x=factor(truth_pred, levels=
 
 figure7 <- ggarrange(positive_grapes_plot, positive_grapes_plot_alpha,
                     labels = c("A", "B"),
-                    font.label = list(size = 20, color = "black", face = "bold", family = NULL),
+                    font.label = list(size = 20, color = "black", face = "bold"),
                     ncol = 1, nrow = 2,
                     common.legend = TRUE, legend = "bottom")
 
 ggsave(paste0(figures_dir, "newbeneficial.svg"), plot = figure7, width = 8.5, height = 9, dpi =300)
 
+positive_grapes_plot <- positive_grapes_plot + 
+  theme(panel.background = element_rect(fill = "white", color = NA),
+        plot.background = element_rect(fill = "white", color = NA))
+
+positive_grapes_plot_alpha <- positive_grapes_plot_alpha + 
+  theme(panel.background = element_rect(fill = "white", color = NA),
+        plot.background = element_rect(fill = "white", color = NA))
+library(Cairo)
+library(grDevices)
+# Manually open a Cairo device for TIFF
+tiff(
+  filename = paste0(figures_dir, "new_figure6.tiff"),
+  width = 8.5,
+  height = 9,
+  units = "in",
+  res = 300,
+  bg = "white"
+)
+
+# Draw the plot
+print(figure7)
+
+# Close the device
+dev.off()
+
+Cairo(
+  file = paste0(figures_dir, "new_figure6.jpg"),
+  type = "jpeg",
+  width = 8.5 * 300,  # 8.5 inches * 300 DPI
+  height = 9 * 300,   # 9 inches * 300 DPI
+  units = "px",
+  bg = "white",
+  quality = 90  # Optional: set JPEG quality (0-100)
+)
+
+# Draw the plot
+print(figure7)
+
+# Close the device
+dev.off()
+
+# Manually open a Cairo device for TIFF
+Cairo(file = paste0(figures_dir, "new_figure6.jpg"), 
+      type = "jpg", 
+      width = 8.5 * 300,  # Multiply width and height by DPI for Cairo
+      height = 9 * 300, 
+      dpi = 300, 
+      units = "px")
+
+# Draw the plot
+print(figure7)
+
+# Close the device
+dev.off()
 #ggsave(paste0(figures_dir, "figure7_poster.svg"), plot = figure7, width = 7.5, height = 9, dpi =300, unit="in")
 
 
